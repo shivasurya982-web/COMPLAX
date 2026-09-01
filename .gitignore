@@ -1,0 +1,12 @@
+backend/data/*.json
+backend/models/**/*.pkl
+backend/datasets/pending/*.csv
+backend/datasets/approved/*.csv
+backend/__pycache__/
+frontend/node_modules/
+frontend/dist/
+.env
+.DS_Store
+.idea/
+.vscode/
+*.pyc
