@@ -14,7 +14,7 @@ from dataset_manager import dataset_bp, generate_initial_dataset
 from ml_model import MLModel
 
 app = Flask(__name__)
-CORS(app)
+CORS(app, resources={r"/api/*": {"origins": "*"}})
 
 # Register Blueprints
 app.register_blueprint(auth_bp, url_prefix='/api/auth')
@@ -70,4 +70,7 @@ def init_app():
 
 if __name__ == '__main__':
     init_app()
-    app.run(debug=True, port=5000)
+    host = os.environ.get('HOST', '0.0.0.0')
+    port = int(os.environ.get('PORT', 5000))
+    debug = os.environ.get('FLASK_DEBUG', '0').lower() in ('1', 'true', 'yes', 'on')
+    app.run(host=host, port=port, debug=debug)

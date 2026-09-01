@@ -6,9 +6,25 @@ import { Send } from 'lucide-react';
 const UserDashboard = () => {
   const { user } = useAuth();
   const [complaint, setComplaint] = useState('');
+  const [locationDetails, setLocationDetails] = useState('');
   const [recentComplaints, setRecentComplaints] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const getLocationPlaceholder = () => {
+    switch (user.category) {
+      case 'Hostel':
+      case 'College Hostel':
+        return 'Room Number (e.g. 302-B)';
+      case 'Apartment':
+      case 'Residential Building':
+        return 'Flat / Unit Number (e.g. A-401)';
+      case 'Office':
+        return 'Cabin / Cubicle / Floor (e.g. 2nd Floor, Desk 12)';
+      default:
+        return 'Specific Location (e.g. Block A, Room 5)';
+    }
+  };
 
   const fetchComplaints = async () => {
     setLoading(true);
@@ -28,7 +44,7 @@ const UserDashboard = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!complaint.trim()) return;
+    if (!complaint.trim() || !locationDetails.trim()) return;
 
     setSubmitting(true);
     try {
@@ -38,9 +54,11 @@ const UserDashboard = () => {
         organizationId: user.organizationId,
         organizationName: user.organizationName,
         category: user.category,
+        locationDetails: locationDetails,
         complaint: complaint
       });
       setComplaint('');
+      setLocationDetails('');
       fetchComplaints();
       alert('Complaint submitted successfully!');
     } catch (err) {
@@ -72,6 +90,19 @@ const UserDashboard = () => {
         <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', color: 'var(--accent)' }}>REPORT A NEW PROBLEM</h3>
         <form onSubmit={handleSubmit}>
           <div className="form-group">
+            <label style={{ color: 'var(--text-main)' }}>Location Details</label>
+            <input
+              type="text"
+              className="form-control"
+              style={{ background: 'rgba(0,0,0,0.2)', marginBottom: '1rem' }}
+              placeholder={getLocationPlaceholder()}
+              value={locationDetails}
+              onChange={(e) => setLocationDetails(e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label style={{ color: 'var(--text-main)' }}>Problem Description</label>
             <textarea
               className="form-control"
               rows="4"

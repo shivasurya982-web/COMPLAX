@@ -38,9 +38,8 @@ A modern, multi-organization complaint management and prioritization system powe
    pip install -r requirements.txt
    ```
 3. Run the server:
-   ```bash
-   python app.py
-   ```
+   - For Development: `python app.py`
+   - For Production (Recommended for Demo): `python run_production.py`
    *Note: On first run, COMPLAX will automatically generate a 500-row seed dataset and train the initial AI model.*
 
 ### 2. Frontend Setup

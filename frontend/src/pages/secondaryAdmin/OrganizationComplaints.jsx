@@ -23,6 +23,7 @@ const OrganizationComplaints = () => {
               <tr>
                 <th>ID</th>
                 <th>User</th>
+                <th>Location</th>
                 <th>Complaint</th>
                 <th>Priority</th>
                 <th>Status</th>
@@ -33,6 +34,7 @@ const OrganizationComplaints = () => {
                 <tr key={c.complaintId}>
                   <td style={{ fontSize: '0.75rem' }}>{c.complaintId}</td>
                   <td>{c.userName}</td>
+                  <td style={{ fontWeight: 600, color: 'var(--accent)' }}>{c.locationDetails}</td>
                   <td>{c.complaint}</td>
                   <td>
                     <span className={`badge badge-${c.priority.toLowerCase()}`}>
@@ -44,7 +46,7 @@ const OrganizationComplaints = () => {
               ))}
               {complaints.length === 0 && (
                 <tr>
-                  <td colSpan="5" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
+                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
                     No complaints found.
                   </td>
                 </tr>

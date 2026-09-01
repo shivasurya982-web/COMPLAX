@@ -27,6 +27,18 @@ const PriorityQueuePage = () => {
                     <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>{c.complaintId}</span>
                   </div>
                   <div style={{ fontSize: '1.125rem', fontWeight: 500, marginBottom: '0.5rem' }}>{c.complaint}</div>
+                  <div style={{ marginBottom: '0.5rem' }}>
+                    <span style={{
+                      padding: '4px 8px',
+                      background: 'rgba(226, 176, 145, 0.1)',
+                      borderRadius: '4px',
+                      fontSize: '0.85rem',
+                      fontWeight: 600,
+                      color: 'var(--accent)'
+                    }}>
+                      Location: {c.locationDetails}
+                    </span>
+                  </div>
                   <div style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
                     User: {c.userName} | Date: {c.date} | Time: {c.time}
                   </div>

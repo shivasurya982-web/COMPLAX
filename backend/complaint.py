@@ -27,6 +27,7 @@ def submit_complaint():
         "organizationId": org_id,
         "organizationName": data['organizationName'],
         "category": data['category'],
+        "locationDetails": data.get('locationDetails', ''), # New field for Room No / Flat No
         "complaint": complaint_text,
         "date": get_current_date(),
         "time": get_current_time(),
