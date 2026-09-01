@@ -10,6 +10,9 @@ from dataset_manager import load_dataset
 MODELS_DIR = os.path.join(os.path.dirname(__file__), 'models')
 DEFAULT_MODEL_DIR = os.path.join(MODELS_DIR, 'default')
 
+# Global cache to keep models in memory for fast prediction
+MODEL_CACHE = {}
+
 class MLModel:
     def __init__(self, org_id='default'):
         self.org_id = org_id
@@ -44,6 +47,9 @@ class MLModel:
         joblib.dump(self.vectorizer, self.vectorizer_path)
         joblib.dump(self.model, self.model_path)
 
+        # Update cache after training
+        MODEL_CACHE[self.org_id] = self
+
         return accuracy
 
     def load(self):
@@ -58,7 +64,7 @@ class MLModel:
             if not self.load():
                 # Fallback to default model if org-specific model fails to load
                 if self.org_id != 'default':
-                    default_ml = MLModel('default')
+                    default_ml = get_model_for_org('default')
                     return default_ml.predict(complaint_text)
                 else:
                     self.train()
@@ -76,7 +82,20 @@ class MLModel:
         return prediction, confidence
 
 def get_model_for_org(org_id):
+    # Check if model is already in memory
+    if org_id in MODEL_CACHE:
+        return MODEL_CACHE[org_id]
+
     model = MLModel(org_id)
     if model.load():
+        MODEL_CACHE[org_id] = model
         return model
-    return MLModel('default')
+
+    # If it's the first time loading the default model
+    if org_id == 'default':
+        model.train()
+        MODEL_CACHE['default'] = model
+        return model
+
+    # Fallback to cached default
+    return get_model_for_org('default')

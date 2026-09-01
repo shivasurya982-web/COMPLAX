@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
+import { Eye, EyeOff } from 'lucide-react';
 
 const UserRegister = () => {
   const [formData, setFormData] = useState({
@@ -12,6 +13,8 @@ const UserRegister = () => {
     confirmPassword: '',
     organizationId: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [error, setError] = useState('');
@@ -49,11 +52,12 @@ const UserRegister = () => {
     setLoading(true);
 
     try {
-      await api.post('/auth/user/register', formData);
+      const response = await api.post('/auth/user/register', formData);
       alert('Registration successful! Please login.');
       navigate('/');
     } catch (err) {
-      setError(err.response?.data?.error || 'Registration failed');
+      const serverError = err.response?.data?.error;
+      setError(serverError || 'Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -105,11 +109,43 @@ const UserRegister = () => {
           <div className="responsive-grid">
             <div className="form-group">
               <label>Password</label>
-              <input type="password" name="password" className="form-control" onChange={handleChange} required />
+              <div className="input-container">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  className="form-control"
+                  style={{ paddingRight: '48px' }}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div className="form-group">
               <label>Confirm Password</label>
-              <input type="password" name="confirmPassword" className="form-control" onChange={handleChange} required />
+              <div className="input-container">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  className="form-control"
+                  style={{ paddingRight: '48px' }}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           </div>
           <button type="submit" className="btn-primary btn-block" disabled={loading}>

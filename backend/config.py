@@ -15,3 +15,7 @@ APPROVED_DATASETS_DIR = os.path.join(BASE_DIR, 'datasets', 'approved')
 MODELS_DIR = os.path.join(BASE_DIR, 'models')
 
 SECRET_KEY = 'complax-secret-key'
+
+# MongoDB Configuration
+# IMPORTANT: Replace <db_password> with your actual password in the string below
+MONGO_URI = "mongodb+srv://surya_123:COMPLAX123@cluster0.wq8dp1c.mongodb.net/complax_db?retryWrites=true&w=majority&appName=Cluster0"

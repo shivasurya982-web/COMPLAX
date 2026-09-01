@@ -56,11 +56,22 @@ A modern, multi-organization complaint management and prioritization system powe
    npm run dev
    ```
 
-## 🔑 Demo Credentials
+### ☁️ Cloud Deployment (Render.com)
 
-### Main Admin (Platform Manager)
-- **Email**: `admin@complax.com`
-- **Password**: `admin123`
+#### 1. Backend (Web Service)
+- **Connect GitHub Repository**
+- **Root Directory**: `backend`
+- **Build Command**: `pip install -r requirements.txt`
+- **Start Command**: `gunicorn wsgi:app`
+- **Environment Variables**: Add `PORT` (Render sets this automatically).
+
+#### 2. Frontend (Static Site)
+- **Connect GitHub Repository**
+- **Root Directory**: `frontend`
+- **Build Command**: `npm install && npm run build`
+- **Publish Directory**: `dist`
+- **Environment Variables**: 
+  - `VITE_API_URL`: Paste your Backend URL (e.g., `https://your-api.onrender.com/api`)
 
 ### Organization Admin
 - Register via the "Organization" tab on the Login page.

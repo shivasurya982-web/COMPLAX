@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
+import { Eye, EyeOff } from 'lucide-react';
 
 const SecondaryAdminRegister = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +14,8 @@ const SecondaryAdminRegister = () => {
     password: '',
     confirmPassword: ''
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [dataset, setDataset] = useState(null);
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState('');
@@ -123,11 +126,43 @@ const SecondaryAdminRegister = () => {
           <div className="responsive-grid">
             <div className="form-group">
               <label>Password</label>
-              <input type="password" name="password" className="form-control" onChange={handleChange} required />
+              <div className="input-container">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  name="password"
+                  className="form-control"
+                  style={{ paddingRight: '48px' }}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
             <div className="form-group">
               <label>Confirm Password</label>
-              <input type="password" name="confirmPassword" className="form-control" onChange={handleChange} required />
+              <div className="input-container">
+                <input
+                  type={showConfirmPassword ? "text" : "password"}
+                  name="confirmPassword"
+                  className="form-control"
+                  style={{ paddingRight: '48px' }}
+                  onChange={handleChange}
+                  required
+                />
+                <button
+                  type="button"
+                  className="password-toggle"
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
             </div>
           </div>
           <div className="form-group">

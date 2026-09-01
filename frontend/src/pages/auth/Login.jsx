@@ -32,7 +32,7 @@ const Login = () => {
     setSubmitting(true);
 
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await api.post('/auth/login', { email, password, requestedRole: role });
       login(response.data.user);
     } catch (err) {
       setError(err.response?.data?.error || 'Login failed. Please try again.');
