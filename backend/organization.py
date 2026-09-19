@@ -4,6 +4,7 @@ import pandas as pd
 from utils.helpers import read_json, write_json
 from utils.id_generator import generate_org_id, generate_dataset_request_id
 from config import ORGANIZATIONS_FILE, ADMINS_FILE, PENDING_DATASETS_DIR, DATASET_REQUESTS_FILE
+from notification_utils import add_notification
 
 org_bp = Blueprint('organization', __name__)
 
@@ -81,6 +82,9 @@ def register_org():
 
     write_json(ORGANIZATIONS_FILE, orgs)
     write_json(ADMINS_FILE, admins)
+
+    # Notify Main Admin
+    add_notification("ADM-001", f"New organization registration request from {data['organizationName']}.", "INFO")
 
     return jsonify({"message": "Registration submitted successfully. Waiting for Main Admin approval."}), 201
 

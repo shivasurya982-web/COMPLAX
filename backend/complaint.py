@@ -4,6 +4,7 @@ from utils.id_generator import generate_complaint_id
 from config import COMPLAINTS_FILE
 from ml_model import get_model_for_org
 from dsa import PriorityQueue
+from notification_utils import add_notification
 
 complaint_bp = Blueprint('complaint', __name__)
 
@@ -24,6 +25,7 @@ def submit_complaint():
         "complaintId": generate_complaint_id(),
         "userId": data['userId'],
         "userName": data['userName'],
+        "userPhone": data.get('userPhone', ''),
         "organizationId": org_id,
         "organizationName": data['organizationName'],
         "category": data['category'],
@@ -39,6 +41,9 @@ def submit_complaint():
     complaints = read_json(COMPLAINTS_FILE)
     complaints.append(new_complaint)
     write_json(COMPLAINTS_FILE, complaints)
+
+    # Notify Organization Admin
+    add_notification(org_id, f"New {priority} priority complaint received from {data['userName']}.", "WARNING" if priority == "HIGH" else "INFO")
 
     return jsonify(new_complaint), 201
 
@@ -57,12 +62,45 @@ def get_org_complaints(org_id):
 @complaint_bp.route('/<complaint_id>/resolve', methods=['PUT'])
 def resolve_complaint(complaint_id):
     complaints = read_json(COMPLAINTS_FILE)
+    user_id = None
+    org_id = None
+    org_name = ""
+    user_name = ""
     for c in complaints:
         if c['complaintId'] == complaint_id:
             c['status'] = 'Resolved'
+            user_id = c['userId']
+            org_id = c['organizationId']
+            org_name = c['organizationName']
+            user_name = c['userName']
             break
     write_json(COMPLAINTS_FILE, complaints)
+
+    if user_id:
+        # Notify the user
+        add_notification(user_id, f"Your complaint at {org_name} has been RESOLVED.", "SUCCESS")
+        # Notify the organization admin
+        add_notification(org_id, f"Complaint from {user_name} has been marked as RESOLVED.", "SUCCESS")
+
     return jsonify({"message": "Complaint resolved"}), 200
+
+@complaint_bp.route('/<complaint_id>/acknowledge', methods=['PUT'])
+def acknowledge_complaint(complaint_id):
+    complaints = read_json(COMPLAINTS_FILE)
+    user_id = None
+    org_name = ""
+    for c in complaints:
+        if c['complaintId'] == complaint_id:
+            c['status'] = 'Seen'
+            user_id = c['userId']
+            org_name = c['organizationName']
+            break
+    write_json(COMPLAINTS_FILE, complaints)
+
+    if user_id:
+        add_notification(user_id, f"{org_name} has NOTICED your complaint.", "INFO")
+
+    return jsonify({"message": "Complaint acknowledged"}), 200
 
 @complaint_bp.route('/<complaint_id>', methods=['DELETE'])
 def delete_complaint(complaint_id):

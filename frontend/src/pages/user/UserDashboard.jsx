@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { Send } from 'lucide-react';
+import { Send, Building2, Tags, Sparkles, CheckCircle } from 'lucide-react';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -10,6 +10,7 @@ const UserDashboard = () => {
   const [recentComplaints, setRecentComplaints] = useState([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const getLocationPlaceholder = () => {
     switch (user.category) {
@@ -42,15 +43,19 @@ const UserDashboard = () => {
     fetchComplaints();
   }, []);
 
+  const [reporterName, setReporterName] = useState(user.fullName);
+  const [reporterPhone, setReporterPhone] = useState(user.phone || '');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!complaint.trim() || !locationDetails.trim()) return;
+    if (!complaint.trim() || !locationDetails.trim() || !reporterName.trim() || !reporterPhone.trim()) return;
 
     setSubmitting(true);
     try {
       await api.post('/complaints', {
         userId: user.userId,
-        userName: user.fullName,
+        userName: reporterName,
+        userPhone: reporterPhone,
         organizationId: user.organizationId,
         organizationName: user.organizationName,
         category: user.category,
@@ -60,7 +65,8 @@ const UserDashboard = () => {
       setComplaint('');
       setLocationDetails('');
       fetchComplaints();
-      alert('Complaint submitted successfully!');
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     } catch (err) {
       alert('Failed to submit complaint');
     } finally {
@@ -69,58 +75,121 @@ const UserDashboard = () => {
   };
 
   return (
-    <div>
+    <div className="animate-fade">
       <div style={{ marginBottom: '2.5rem' }}>
-        <h2 style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>Welcome back, {user.fullName}</h2>
-        <p style={{ color: 'var(--text-muted)' }}>Here is what's happening with your complaints at {user.organizationName}.</p>
+        <h2 className="dashboard-title">Welcome back, {user.fullName} 👋</h2>
+        <p className="dashboard-subtitle">Here is what's happening with your complaints.</p>
       </div>
 
       <div className="stats-grid">
         <div className="card stat-card">
-          <span className="stat-label">Organization</span>
-          <span className="stat-value" style={{ color: 'var(--accent)' }}>{user.organizationName}</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)' }}>
+            <Building2 size={20} />
+            <span className="stat-label">Organization</span>
+          </div>
+          <span className="stat-value">{user.organizationName}</span>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Your registered organization</p>
         </div>
         <div className="card stat-card">
-          <span className="stat-label">Category</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)' }}>
+            <Tags size={20} />
+            <span className="stat-label">Category</span>
+          </div>
           <span className="stat-value">{user.category}</span>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Organization type</p>
         </div>
       </div>
 
-      <div className="card" style={{ marginBottom: '2.5rem', background: 'linear-gradient(to bottom right, #16161a, #1e1b2e)' }}>
-        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem', color: 'var(--accent)' }}>REPORT A NEW PROBLEM</h3>
-        <form onSubmit={handleSubmit}>
-          <div className="form-group">
-            <label style={{ color: 'var(--text-main)' }}>Location Details</label>
-            <input
-              type="text"
-              className="form-control"
-              style={{ background: 'rgba(0,0,0,0.2)', marginBottom: '1rem' }}
-              placeholder={getLocationPlaceholder()}
-              value={locationDetails}
-              onChange={(e) => setLocationDetails(e.target.value)}
-              required
-            />
+      <div className="card" style={{ marginBottom: '2.5rem', position: 'relative', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '150px',
+          height: '150px',
+          background: 'radial-gradient(circle, rgba(242, 166, 117, 0.05) 0%, transparent 70%)',
+          zIndex: 0
+        }}></div>
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>REPORT A NEW PROBLEM</h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Describe the issue clearly. Our AI will automatically analyze and assign its priority.</p>
+            </div>
+            <div className="ai-chip">
+              <Sparkles size={14} />
+              AI POWERED
+            </div>
           </div>
-          <div className="form-group">
-            <label style={{ color: 'var(--text-main)' }}>Problem Description</label>
-            <textarea
-              className="form-control"
-              rows="4"
-              style={{ background: 'rgba(0,0,0,0.2)' }}
-              placeholder="Describe your issue in detail. Our AI will prioritize it automatically..."
-              value={complaint}
-              onChange={(e) => setComplaint(e.target.value)}
-              required
-            ></textarea>
-          </div>
-          <button type="submit" className="btn-primary" style={{ width: 'auto', padding: '12px 24px', display: 'flex', alignItems: 'center', gap: '8px' }} disabled={submitting}>
-            {submitting ? 'Analyzing...' : <>Submit Complaint <Send size={18} /></>}
-          </button>
-        </form>
+
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>REPORTER NAME</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Your Full Name"
+                  value={reporterName}
+                  onChange={(e) => setReporterName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>PHONE NUMBER</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Contact Number"
+                  value={reporterPhone}
+                  onChange={(e) => setReporterPhone(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>LOCATION DETAILS</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder={getLocationPlaceholder()}
+                value={locationDetails}
+                onChange={(e) => setLocationDetails(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>PROBLEM DESCRIPTION</label>
+              <textarea
+                className="form-control"
+                rows="4"
+                placeholder="Describe your issue in detail..."
+                value={complaint}
+                onChange={(e) => setComplaint(e.target.value)}
+                required
+              ></textarea>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <button type="submit" className="btn-primary" disabled={submitting}>
+                {submitting ? 'Analyzing...' : <>Submit Complaint <Send size={18} /></>}
+              </button>
+
+              {showSuccess && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--low)', fontSize: '0.875rem', fontWeight: 600 }}>
+                  <CheckCircle size={18} />
+                  Complaint submitted successfully!
+                </div>
+              )}
+            </div>
+          </form>
+        </div>
       </div>
 
       <div className="card">
-        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>Recent History</h3>
+        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>RECENT HISTORY</h3>
         <div className="table-container">
           <table>
             <thead>
@@ -135,19 +204,15 @@ const UserDashboard = () => {
               {recentComplaints.length > 0 ? (
                 recentComplaints.map((c) => (
                   <tr key={c.complaintId}>
-                    <td style={{ fontWeight: 500 }}>{c.complaint}</td>
-                    <td style={{ color: 'var(--text-muted)' }}>{c.date}</td>
+                    <td style={{ fontWeight: 500, maxWidth: '400px' }}>{c.complaint}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{c.date}</td>
                     <td>
                       <span className={`badge badge-${c.priority.toLowerCase()}`}>
                         {c.priority}
                       </span>
                     </td>
                     <td>
-                      <span style={{
-                        color: c.status === 'Resolved' ? 'var(--low)' : 'var(--accent)',
-                        fontWeight: 600,
-                        fontSize: '0.85rem'
-                      }}>
+                      <span className={`status-text status-${c.status.toLowerCase().replace(' ', '-')}`}>
                         {c.status}
                       </span>
                     </td>
@@ -155,8 +220,13 @@ const UserDashboard = () => {
                 ))
               ) : (
                 <tr>
-                  <td colSpan="4" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-muted)' }}>
-                    {loading ? 'Fetching records...' : 'No recent complaints found.'}
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+                    {loading ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                        <div className="loading-spinner"></div>
+                        <span>Fetching your complaint records...</span>
+                      </div>
+                    ) : 'No recent complaints found.'}
                   </td>
                 </tr>
               )}

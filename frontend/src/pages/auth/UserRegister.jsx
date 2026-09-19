@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
-import { Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, User, Mail, Phone, Building, Hash, Lock, Zap } from 'lucide-react';
 
 const UserRegister = () => {
   const [formData, setFormData] = useState({
@@ -52,7 +52,7 @@ const UserRegister = () => {
     setLoading(true);
 
     try {
-      const response = await api.post('/auth/user/register', formData);
+      await api.post('/auth/user/register', formData);
       alert('Registration successful! Please login.');
       navigate('/');
     } catch (err) {
@@ -65,95 +65,143 @@ const UserRegister = () => {
 
   return (
     <div className="auth-wrapper">
-      <div className="glass-card auth-card" style={{ maxWidth: '500px' }}>
-        <h2 style={{ textAlign: 'center', marginBottom: '1.5rem' }}>User Registration</h2>
+      <div className="card auth-card animate-fade" style={{ maxWidth: '650px' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '12px',
+            marginBottom: '0.75rem',
+            color: 'var(--primary)'
+          }}>
+            <Zap size={28} fill="var(--primary)" />
+            <h1 style={{ fontSize: '2rem', letterSpacing: '-0.05em', color: 'var(--text-main)' }}>COMPLAX</h1>
+          </div>
+          <h2 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>User Registration</h2>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Create your account to start reporting issues.</p>
+        </div>
 
-        {error && <div style={{ color: 'var(--danger)', marginBottom: '1rem', textAlign: 'center' }}>{error}</div>}
+        {error && (
+          <div style={{
+            background: 'rgba(239, 68, 68, 0.1)',
+            color: '#EF4444',
+            padding: '12px',
+            borderRadius: '12px',
+            marginBottom: '1.5rem',
+            fontSize: '0.875rem',
+            textAlign: 'center',
+            border: '1px solid rgba(239, 68, 68, 0.2)'
+          }}>
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleSubmit}>
-          <div className="responsive-grid">
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
             <div className="form-group">
               <label>Full Name</label>
-              <input type="text" name="fullName" className="form-control" onChange={handleChange} required />
+              <div style={{ position: 'relative' }}>
+                <User size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input type="text" name="fullName" className="form-control" style={{ paddingLeft: '40px' }} onChange={handleChange} required />
+              </div>
             </div>
             <div className="form-group">
               <label>Student / Resident ID</label>
-              <input type="text" name="studentResidentId" className="form-control" onChange={handleChange} required />
+              <div style={{ position: 'relative' }}>
+                <Hash size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input type="text" name="studentResidentId" className="form-control" style={{ paddingLeft: '40px' }} onChange={handleChange} required />
+              </div>
             </div>
           </div>
-          <div className="responsive-grid">
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
             <div className="form-group">
               <label>Email</label>
-              <input type="email" name="email" className="form-control" onChange={handleChange} required />
+              <div style={{ position: 'relative' }}>
+                <Mail size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input type="email" name="email" className="form-control" style={{ paddingLeft: '40px' }} onChange={handleChange} required />
+              </div>
             </div>
             <div className="form-group">
               <label>Phone Number</label>
-              <input type="text" name="phone" className="form-control" onChange={handleChange} required />
+              <div style={{ position: 'relative' }}>
+                <Phone size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input type="text" name="phone" className="form-control" style={{ paddingLeft: '40px' }} onChange={handleChange} required />
+              </div>
             </div>
           </div>
-          <div className="form-group">
-            <label>Organization</label>
-            <select name="organizationId" className="form-control" onChange={handleChange} required>
-              <option value="">Select Organization</option>
-              {organizations.map(org => (
-                <option key={org.organizationId} value={org.organizationId}>{org.name}</option>
-              ))}
-            </select>
-          </div>
-          {selectedOrg && (
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
+            <div className="form-group">
+              <label>Organization</label>
+              <div style={{ position: 'relative' }}>
+                <Building size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <select name="organizationId" className="form-control" style={{ paddingLeft: '40px' }} onChange={handleChange} required>
+                  <option value="">Select Organization</option>
+                  {organizations.map(org => (
+                    <option key={org.organizationId} value={org.organizationId}>{org.name}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
             <div className="form-group">
               <label>Category</label>
-              <input type="text" className="form-control" value={selectedOrg.category} disabled />
+              <input type="text" className="form-control" value={selectedOrg?.category || 'Auto-filled from org'} disabled />
             </div>
-          )}
-          <div className="responsive-grid">
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.25rem' }}>
             <div className="form-group">
               <label>Password</label>
-              <div className="input-container">
+              <div style={{ position: 'relative' }}>
+                <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
                   className="form-control"
-                  style={{ paddingRight: '48px' }}
+                  style={{ paddingLeft: '40px', paddingRight: '40px' }}
                   onChange={handleChange}
                   required
                 />
                 <button
                   type="button"
-                  className="password-toggle"
                   onClick={() => setShowPassword(!showPassword)}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                 >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
             <div className="form-group">
               <label>Confirm Password</label>
-              <div className="input-container">
+              <div style={{ position: 'relative' }}>
+                <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
                 <input
                   type={showConfirmPassword ? "text" : "password"}
                   name="confirmPassword"
                   className="form-control"
-                  style={{ paddingRight: '48px' }}
+                  style={{ paddingLeft: '40px', paddingRight: '40px' }}
                   onChange={handleChange}
                   required
                 />
                 <button
                   type="button"
-                  className="password-toggle"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
                 >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  {showConfirmPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
             </div>
           </div>
-          <button type="submit" className="btn-primary btn-block" disabled={loading}>
-            {loading ? 'Registering...' : 'REGISTER'}
+
+          <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={loading}>
+            {loading ? 'Registering Account...' : 'Create Account'}
           </button>
         </form>
-        <div className="auth-footer">
-          <Link to="/">Back to Login</Link>
+
+        <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+          Already have an account? <Link to="/" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Login here</Link>
         </div>
       </div>
     </div>

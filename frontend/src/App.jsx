@@ -13,6 +13,7 @@ import MyOrganization from './pages/user/MyOrganization';
 
 import MainAdminDashboard from './pages/mainAdmin/MainAdminDashboard';
 import Organizations from './pages/mainAdmin/Organizations';
+import Users from './pages/mainAdmin/Users';
 import Categories from './pages/mainAdmin/Categories';
 import AdminRequests from './pages/mainAdmin/AdminRequests';
 import DatasetApprovals from './pages/mainAdmin/DatasetApprovals';
@@ -21,6 +22,7 @@ import SecondaryAdminDashboard from './pages/secondaryAdmin/SecondaryAdminDashbo
 import OrganizationComplaints from './pages/secondaryAdmin/OrganizationComplaints';
 import PriorityQueuePage from './pages/secondaryAdmin/PriorityQueuePage';
 import OrganizationDataset from './pages/secondaryAdmin/OrganizationDataset';
+import Profile from './pages/Profile';
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
@@ -76,6 +78,7 @@ const App = () => {
           {/* Main Admin Routes */}
           <Route path="/admin/dashboard" element={<ProtectedRoute role="MAIN_ADMIN"><MainAdminDashboard /></ProtectedRoute>} />
           <Route path="/admin/organizations" element={<ProtectedRoute role="MAIN_ADMIN"><Organizations /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute role="MAIN_ADMIN"><Users /></ProtectedRoute>} />
           <Route path="/admin/categories" element={<ProtectedRoute role="MAIN_ADMIN"><Categories /></ProtectedRoute>} />
           <Route path="/admin/requests" element={<ProtectedRoute role="MAIN_ADMIN"><AdminRequests /></ProtectedRoute>} />
           <Route path="/admin/datasets" element={<ProtectedRoute role="MAIN_ADMIN"><DatasetApprovals /></ProtectedRoute>} />
@@ -85,6 +88,9 @@ const App = () => {
           <Route path="/secondary-admin/complaints" element={<ProtectedRoute role="SECONDARY_ADMIN"><OrganizationComplaints /></ProtectedRoute>} />
           <Route path="/secondary-admin/queue" element={<ProtectedRoute role="SECONDARY_ADMIN"><PriorityQueuePage /></ProtectedRoute>} />
           <Route path="/secondary-admin/dataset" element={<ProtectedRoute role="SECONDARY_ADMIN"><OrganizationDataset /></ProtectedRoute>} />
+
+          {/* Shared Routes */}
+          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
 
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>

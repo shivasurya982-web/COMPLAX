@@ -9,7 +9,8 @@ import {
   Users,
   Tags,
   Database,
-  LogOut
+  LogOut,
+  Zap
 } from 'lucide-react';
 
 const Sidebar = ({ isOpen }) => {
@@ -24,6 +25,7 @@ const Sidebar = ({ isOpen }) => {
   const adminLinks = [
     { to: '/admin/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { to: '/admin/organizations', icon: <Building2 size={20} />, label: 'Organizations' },
+    { to: '/admin/users', icon: <Users size={20} />, label: 'Users' },
     { to: '/admin/categories', icon: <Tags size={20} />, label: 'Categories' },
     { to: '/admin/requests', icon: <Users size={20} />, label: 'Requests' },
     { to: '/admin/datasets', icon: <Database size={20} />, label: 'Datasets' },
@@ -36,16 +38,23 @@ const Sidebar = ({ isOpen }) => {
     { to: '/secondary-admin/dataset', icon: <Database size={20} />, label: 'Dataset' },
   ];
 
-  const links = user.role === 'MAIN_ADMIN'
+  const links = user?.role === 'MAIN_ADMIN'
     ? adminLinks
-    : user.role === 'SECONDARY_ADMIN'
+    : user?.role === 'SECONDARY_ADMIN'
       ? secondaryAdminLinks
       : userLinks;
 
   return (
     <div className={`sidebar ${isOpen ? 'open' : ''}`}>
-      <div className="sidebar-logo">COMPLAX</div>
-      <nav>
+      <div className="sidebar-logo-container">
+        <div className="sidebar-logo">
+          <Zap fill="var(--primary)" size={24} />
+          <span>COMPLAX</span>
+        </div>
+        <div className="sidebar-tagline">Smart Complaint Management</div>
+      </div>
+
+      <nav style={{ flex: 1 }}>
         {links.map((link) => (
           <NavLink
             key={link.to}
@@ -57,6 +66,7 @@ const Sidebar = ({ isOpen }) => {
           </NavLink>
         ))}
       </nav>
+
       <button
         onClick={logout}
         className="nav-item logout-btn"

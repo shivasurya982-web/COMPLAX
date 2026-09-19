@@ -4,6 +4,7 @@ import random
 from flask import Blueprint, request, jsonify
 from utils.helpers import read_json, write_json
 from config import DATASET_REQUESTS_FILE, PENDING_DATASETS_DIR, APPROVED_DATASETS_DIR, ORGANIZATIONS_FILE
+from notification_utils import add_notification
 
 dataset_bp = Blueprint('dataset', __name__)
 
@@ -135,6 +136,9 @@ def approve_dataset():
             from ml_model import MLModel
             model = MLModel(org_id)
             model.train(dest)
+
+            # Notify Organization Admin
+            add_notification(org_id, "Your organization's dataset has been APPROVED and custom model training is complete.", "SUCCESS")
 
         write_json(DATASET_REQUESTS_FILE, requests)
         return jsonify({"message": "Dataset approved and model trained"}), 200

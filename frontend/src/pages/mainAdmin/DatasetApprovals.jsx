@@ -1,6 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import api from '../../services/api';
-import { Edit2, X, Save, Plus, Trash2, Globe } from 'lucide-react';
+import {
+  Edit2,
+  X,
+  Save,
+  Plus,
+  Trash2,
+  Globe,
+  CheckCircle,
+  Database,
+  ArrowLeft,
+  Search,
+  ShieldCheck
+} from 'lucide-react';
 
 const DatasetApprovals = () => {
   const [requests, setRequests] = useState([]);
@@ -8,6 +20,7 @@ const DatasetApprovals = () => {
   const [editingId, setEditingId] = useState(null); // 'main' or a requestId
   const [editData, setEditData] = useState([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [editSearch, setEditSearch] = useState('');
 
   const fetchRequests = async () => {
     try {
@@ -53,9 +66,7 @@ const DatasetApprovals = () => {
   };
 
   const addRow = () => {
-    // Add to the START of the list so it is immediately visible
     setEditData([{ complaint: '', priority: 'Medium' }, ...editData]);
-    // Scroll table to top
     const container = document.getElementById('edit-table-container');
     if (container) container.scrollTop = 0;
   };
@@ -80,47 +91,65 @@ const DatasetApprovals = () => {
   };
 
   if (editingId) {
+    const filteredEditData = editData.filter(row =>
+      (row.complaint || '').toLowerCase().includes(editSearch.toLowerCase())
+    );
+
     return (
-      <div>
+      <div className="animate-fade">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.5rem' }}>
-              {editingId === 'main' ? 'Editing Global Main Dataset' : 'Editing Organization Dataset'}
+            <button
+              onClick={() => setEditingId(null)}
+              style={{ background: 'transparent', border: 'none', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontWeight: 600, padding: 0, marginBottom: '0.5rem' }}
+            >
+              <ArrowLeft size={16} /> Back to Datasets
+            </button>
+            <h2 className="dashboard-title" style={{ margin: 0 }}>
+              {editingId === 'main' ? 'Global Dataset' : 'Organization Dataset'}
             </h2>
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Note: Added rows appear at the top.</p>
           </div>
           <div style={{ display: 'flex', gap: '1rem' }}>
-            <button className="btn-primary" onClick={addRow} style={{ background: 'var(--low)', display: 'flex', gap: '8px' }}>
-              <Plus size={18} /> Add Row
+            <button className="btn-primary" onClick={addRow} style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--low)', border: '1px solid var(--low)' }}>
+              <Plus size={18} /> Add Entry
             </button>
-            <button className="btn-primary" onClick={saveChanges} disabled={isSaving} style={{ display: 'flex', gap: '8px' }}>
-              <Save size={18} /> {isSaving ? 'Saving...' : 'Save Changes'}
-            </button>
-            <button className="btn-primary" onClick={() => setEditingId(null)} style={{ background: 'var(--secondary)', display: 'flex', gap: '8px' }}>
-              <X size={18} /> Cancel
+            <button className="btn-primary" onClick={saveChanges} disabled={isSaving}>
+              <Save size={18} /> {isSaving ? 'Training...' : 'Save & Retrain'}
             </button>
           </div>
         </div>
 
         <div className="card">
-          <div id="edit-table-container" className="table-container" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+          <div style={{ marginBottom: '1.5rem', position: 'relative', maxWidth: '400px' }}>
+            <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+            <input
+              type="text"
+              className="form-control"
+              placeholder="Search in dataset..."
+              style={{ paddingLeft: '40px' }}
+              value={editSearch}
+              onChange={(e) => setEditSearch(e.target.value)}
+            />
+          </div>
+
+          <div id="edit-table-container" className="table-container" style={{ maxHeight: '65vh', overflowY: 'auto' }}>
             <table>
               <thead>
                 <tr>
-                  <th style={{ width: '50px' }}>#</th>
-                  <th style={{ width: '65%' }}>Complaint Text</th>
-                  <th style={{ width: '20%' }}>Priority</th>
-                  <th style={{ width: '10%' }}>Actions</th>
+                  <th style={{ width: '60px' }}>#</th>
+                  <th>Complaint Description</th>
+                  <th style={{ width: '200px' }}>Assigned Priority</th>
+                  <th style={{ width: '100px', textAlign: 'right' }}>Action</th>
                 </tr>
               </thead>
               <tbody>
-                {editData.map((row, idx) => (
+                {filteredEditData.map((row, idx) => (
                   <tr key={idx}>
-                    <td style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{idx + 1}</td>
+                    <td style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{idx + 1}</td>
                     <td>
                       <textarea
                         className="form-control"
-                        style={{ background: 'rgba(0,0,0,0.2)', height: 'auto', minHeight: '40px', padding: '8px' }}
+                        style={{ height: 'auto', minHeight: '40px', padding: '8px', fontSize: '0.9rem' }}
                         value={row.complaint}
                         onChange={(e) => handleEditChange(idx, 'complaint', e.target.value)}
                       />
@@ -128,18 +157,20 @@ const DatasetApprovals = () => {
                     <td>
                       <select
                         className="form-control"
-                        style={{ background: 'rgba(0,0,0,0.2)' }}
-                        value={row.priority}
+                        value={row.priority.toUpperCase()}
                         onChange={(e) => handleEditChange(idx, 'priority', e.target.value)}
                       >
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
+                        <option value="HIGH">HIGH</option>
+                        <option value="MEDIUM">MEDIUM</option>
+                        <option value="LOW">LOW</option>
                       </select>
                     </td>
-                    <td style={{ textAlign: 'center' }}>
-                      <button onClick={() => removeRow(idx)} style={{ background: 'none', border: 'none', color: 'var(--high)', cursor: 'pointer' }}>
-                        <Trash2 size={18} />
+                    <td style={{ textAlign: 'right' }}>
+                      <button
+                        onClick={() => removeRow(idx)}
+                        style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--high)', padding: '8px', borderRadius: '8px', cursor: 'pointer' }}
+                      >
+                        <Trash2 size={16} />
                       </button>
                     </td>
                   </tr>
@@ -156,132 +187,115 @@ const DatasetApprovals = () => {
   const approvedDatasets = requests.filter(r => r.status === 'APPROVED');
 
   return (
-    <div>
-      <h2 style={{ marginBottom: '1.5rem' }}>Dataset Management</h2>
+    <div className="animate-fade">
+      <div style={{ marginBottom: '2.5rem' }}>
+        <h2 className="dashboard-title">Dataset Management</h2>
+        <p className="dashboard-subtitle">Manage the data used to train the TF-IDF and Decision Tree models.</p>
+      </div>
 
-      {/* Main Global Dataset Section */}
-      <div style={{ marginBottom: '3rem' }}>
-        <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Globe size={20} /> GLOBAL MAIN DATASET
-        </h3>
-        <div className="card" style={{ background: 'linear-gradient(to right, rgba(127, 90, 240, 0.05), transparent)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '1.1rem', marginBottom: '4px' }}>complaint_priority_dataset.csv</div>
-              <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-                Location: COMPLAX/dataset/ | This dataset trains the default ML model.
-              </div>
+      {/* Global Dataset */}
+      <div className="card" style={{ marginBottom: '3rem', borderLeft: '6px solid var(--primary)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(242, 166, 117, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+              <Globe size={24} />
             </div>
-            <button
-              className="btn-primary"
-              style={{ padding: '0 24px', background: 'var(--primary)' }}
-              onClick={() => startEditing('main', true)}
-            >
-              <Edit2 size={16} style={{ marginRight: '8px' }} /> Edit Main Dataset
-            </button>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: '1.25rem', color: 'var(--text-main)' }}>Global Main Dataset</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>Trains the default system-wide AI model.</div>
+            </div>
           </div>
+          <button className="btn-primary" onClick={() => startEditing('main', true)}>
+            <Edit2 size={16} /> Edit Data Pool
+          </button>
         </div>
       </div>
 
-      <div style={{ marginBottom: '3rem' }}>
-        <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--accent)' }}>PENDING REQUESTS</h3>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '2rem' }}>
+        {/* Pending Requests */}
         <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--status-pending)', marginBottom: '1.5rem' }}>
+            <Database size={20} />
+            <h3 style={{ fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Approval Queue</h3>
+          </div>
           <div className="table-container">
             <table>
               <thead>
                 <tr>
                   <th>Organization</th>
-                  <th>Dataset File</th>
-                  <th>Rows</th>
-                  <th>Actions</th>
+                  <th>Samples</th>
+                  <th style={{ textAlign: 'right' }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {pendingRequests.map((r) => (
-                  <tr key={r.requestId}>
-                    <td>{r.organizationName}</td>
-                    <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{r.datasetName}</td>
-                    <td>{r.rows}</td>
-                    <td>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button
-                          className="btn-primary"
-                          style={{ padding: '0 12px', height: '32px', fontSize: '0.75rem', background: 'var(--primary-light)' }}
-                          onClick={() => startEditing(r.requestId)}
-                        >
-                          <Edit2 size={14} style={{ marginRight: '4px' }} /> Edit
-                        </button>
-                        <button
-                          className="btn-primary"
-                          style={{ padding: '0 12px', height: '32px', fontSize: '0.75rem' }}
-                          onClick={() => handleAction(r.requestId, 'approve')}
-                        >
-                          Approve
-                        </button>
-                        <button
-                          className="btn-primary"
-                          style={{ padding: '0 12px', height: '32px', fontSize: '0.75rem', background: 'var(--high)' }}
-                          onClick={() => handleAction(r.requestId, 'reject')}
-                        >
-                          Reject
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {pendingRequests.length === 0 && !loading && (
-                  <tr>
-                    <td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                      No pending dataset requests.
-                    </td>
-                  </tr>
+                {pendingRequests.length > 0 ? (
+                  pendingRequests.map((r) => (
+                    <tr key={r.requestId}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{r.organizationName}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{r.datasetName}</div>
+                      </td>
+                      <td>{r.rows}</td>
+                      <td style={{ textAlign: 'right' }}>
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                          <button className="btn-primary" style={{ padding: '8px' }} onClick={() => startEditing(r.requestId)} title="Edit">
+                            <Edit2 size={14} />
+                          </button>
+                          <button className="btn-primary" style={{ padding: '8px', background: 'var(--low)' }} onClick={() => handleAction(r.requestId, 'approve')} title="Approve">
+                            <CheckCircle size={14} />
+                          </button>
+                          <button className="btn-primary" style={{ padding: '8px', background: 'var(--high)' }} onClick={() => handleAction(r.requestId, 'reject')} title="Reject">
+                            <X size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan="3" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No pending requests</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </div>
-      </div>
 
-      <div>
-        <h3 style={{ marginBottom: '1rem', fontSize: '1.1rem', color: 'var(--low)' }}>APPROVED DATASETS</h3>
+        {/* Approved Models */}
         <div className="card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--low)', marginBottom: '1.5rem' }}>
+            <ShieldCheck size={20} />
+            <h3 style={{ fontSize: '1rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Models</h3>
+          </div>
           <div className="table-container">
             <table>
               <thead>
                 <tr>
                   <th>Organization</th>
-                  <th>Dataset ID</th>
-                  <th>Rows</th>
                   <th>Status</th>
-                  <th>Actions</th>
+                  <th style={{ textAlign: 'right' }}>Data</th>
                 </tr>
               </thead>
               <tbody>
-                {approvedDatasets.map((r) => (
-                  <tr key={r.requestId}>
-                    <td>{r.organizationName}</td>
-                    <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{r.organizationId}.csv</td>
-                    <td>{r.rows}</td>
-                    <td>
-                      <span className="badge badge-low">Active Model</span>
-                    </td>
-                    <td>
-                      <button
-                        className="btn-primary"
-                        style={{ padding: '0 12px', height: '32px', fontSize: '0.75rem', background: 'var(--primary-light)' }}
-                        onClick={() => startEditing(r.requestId)}
-                      >
-                        <Edit2 size={14} style={{ marginRight: '4px' }} /> Edit Content
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-                {approvedDatasets.length === 0 && !loading && (
-                  <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
-                      No approved datasets found.
-                    </td>
-                  </tr>
+                {approvedDatasets.length > 0 ? (
+                  approvedDatasets.map((r) => (
+                    <tr key={r.requestId}>
+                      <td>
+                        <div style={{ fontWeight: 600 }}>{r.organizationName}</div>
+                        <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>ID: {r.organizationId}</div>
+                      </td>
+                      <td>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--low)', fontSize: '0.75rem', fontWeight: 700 }}>
+                          <CheckCircle size={14} /> ACTIVE
+                        </div>
+                      </td>
+                      <td style={{ textAlign: 'right' }}>
+                        <button className="btn-primary" style={{ padding: '8px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-main)', border: '1px solid var(--border)' }} onClick={() => startEditing(r.requestId)}>
+                          <Edit2 size={14} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr><td colSpan="3" style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>No active custom models</td></tr>
                 )}
               </tbody>
             </table>
