@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { Send, Building2, Tags, Sparkles, CheckCircle } from 'lucide-react';
+import { Send, Building2, Tags, CheckCircle } from 'lucide-react';
 
 const UserDashboard = () => {
   const { user } = useAuth();
@@ -16,14 +16,14 @@ const UserDashboard = () => {
     switch (user.category) {
       case 'Hostel':
       case 'College Hostel':
-        return 'Room Number (e.g. 302-B)';
+        return 'Room Number or Location (e.g. 302 or your location like c block)';
       case 'Apartment':
       case 'Residential Building':
-        return 'Flat / Unit Number (e.g. A-401)';
+        return 'Flat / Unit Number or Location (e.g. 302 or your location like c block)';
       case 'Office':
-        return 'Cabin / Cubicle / Floor (e.g. 2nd Floor, Desk 12)';
+        return 'Cabin / Floor or Location (e.g. 302 or your location like c block)';
       default:
-        return 'Specific Location (e.g. Block A, Room 5)';
+        return 'e.g. 302 or your location like c block';
     }
   };
 
@@ -115,11 +115,7 @@ const UserDashboard = () => {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
             <div>
               <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>REPORT A NEW PROBLEM</h3>
-              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Describe the issue clearly. Our AI will automatically analyze and assign its priority.</p>
-            </div>
-            <div className="ai-chip">
-              <Sparkles size={14} />
-              AI POWERED
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Describe the issue clearly. Our system will automatically analyze and assign its priority.</p>
             </div>
           </div>
 
@@ -161,11 +157,11 @@ const UserDashboard = () => {
               />
             </div>
             <div className="form-group">
-              <label>PROBLEM DESCRIPTION</label>
+              <label>DESCRIBE YOUR PROBLEM CORRECTLY</label>
               <textarea
                 className="form-control"
                 rows="4"
-                placeholder="Describe your issue in detail..."
+                placeholder="Describe your problem correctly..."
                 value={complaint}
                 onChange={(e) => setComplaint(e.target.value)}
                 required

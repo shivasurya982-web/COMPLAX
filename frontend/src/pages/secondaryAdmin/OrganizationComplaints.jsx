@@ -27,8 +27,8 @@ const OrganizationComplaints = () => {
   const filteredComplaints = complaints.filter(c => {
     const matchesSearch = c.complaint.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           c.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          c.locationDetails.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPriority = filterPriority === 'All' || c.priority === filterPriority;
+                          (c.locationDetails || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPriority = filterPriority === 'All' || c.priority?.toUpperCase() === filterPriority?.toUpperCase();
     return matchesSearch && matchesPriority;
   });
 

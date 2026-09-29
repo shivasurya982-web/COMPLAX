@@ -12,24 +12,22 @@ const Navbar = ({ onToggleSidebar }) => {
 
   const fetchNotifications = async () => {
     try {
-      const [countRes, listRes] = await Promise.all([
-        api.get(`/notifications/${user.userId}/unread-count`),
-        api.get(`/notifications/${user.userId}`)
-      ]);
-      setUnreadCount(countRes.data.count);
-      setNotifications(listRes.data);
+      const response = await api.get(`/notifications/${user.userId}`);
+      const list = response.data || [];
+      setNotifications(list);
+      setUnreadCount(list.filter(n => !n.isRead).length);
     } catch (err) {
       console.error("Failed to fetch notifications");
     }
   };
 
   useEffect(() => {
-    if (user) {
+    if (user?.userId) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 10000);
+      const interval = setInterval(fetchNotifications, 15000);
       return () => clearInterval(interval);
     }
-  }, [user]);
+  }, [user?.userId]);
 
   const handleMarkAsRead = async () => {
     setShowNotifications(!showNotifications);

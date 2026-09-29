@@ -47,14 +47,14 @@ const MyComplaints = () => {
 
   const filteredComplaints = complaints.filter(c => {
     const matchesSearch = c.complaint.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          c.locationDetails.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesPriority = filterPriority === 'All' || c.priority === filterPriority;
+                          (c.locationDetails || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesPriority = filterPriority === 'All' || c.priority?.toUpperCase() === filterPriority?.toUpperCase();
     return matchesSearch && matchesPriority;
   });
 
   const stats = {
     total: complaints.length,
-    pending: complaints.filter(c => c.status === 'Pending').length,
+    pending: complaints.filter(c => c.status !== 'Resolved').length,
     resolved: complaints.filter(c => c.status === 'Resolved').length
   };
 

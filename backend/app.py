@@ -25,6 +25,11 @@ app.register_blueprint(complaint_bp, url_prefix='/api/complaints')
 app.register_blueprint(dataset_bp, url_prefix='/api/datasets')
 app.register_blueprint(notification_bp, url_prefix='/api/notifications')
 
+@app.after_request
+def add_performance_headers(response):
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    return response
+
 def init_app():
     # Ensure directories exist
     os.makedirs(os.path.join(os.path.dirname(__file__), 'data'), exist_ok=True)
@@ -64,6 +69,70 @@ def init_app():
             u['status'] = 'ACTIVE'
             modified_users = True
     if modified_users: write_json(USERS_FILE, users)
+
+    # Data integrity fix: Sync organization IDs across users, complaints, admins, and orgs
+    from config import ORGANIZATIONS_FILE, COMPLAINTS_FILE
+    orgs = read_json(ORGANIZATIONS_FILE)
+    complaints = read_json(COMPLAINTS_FILE)
+
+    orgs_modified = False
+    for o in orgs:
+        if o.get('name') and o['name'] != o['name'].strip():
+            o['name'] = o['name'].strip()
+            orgs_modified = True
+    if orgs_modified: write_json(ORGANIZATIONS_FILE, orgs)
+
+    admins_modified = False
+    for a in admins:
+        if a.get('organizationName') and a['organizationName'] != a['organizationName'].strip():
+            a['organizationName'] = a['organizationName'].strip()
+            admins_modified = True
+    if admins_modified: write_json(ADMINS_FILE, admins)
+
+    email_to_org_id = {}
+    name_to_org_id = {}
+    for o in orgs:
+        oid = o.get('organizationId')
+        if o.get('email'): email_to_org_id[o['email'].strip().lower()] = oid
+        if o.get('name'): name_to_org_id[o['name'].strip().lower()] = oid
+
+    for a in admins:
+        if a.get('role') == 'SECONDARY_ADMIN':
+            oid = a.get('organizationId')
+            if a.get('email') and a['email'].strip().lower() not in email_to_org_id:
+                email_to_org_id[a['email'].strip().lower()] = oid
+            if a.get('organizationName') and a['organizationName'].strip().lower() not in name_to_org_id:
+                name_to_org_id[a['organizationName'].strip().lower()] = oid
+
+    users_sync = False
+    for u in users:
+        u_name = u.get('organizationName', '').strip().lower()
+        u_email = u.get('studentResidentId', '').strip().lower()
+        u_user_email = u.get('email', '').strip().lower()
+        target_id = email_to_org_id.get(u_email) or email_to_org_id.get(u_user_email) or name_to_org_id.get(u_name)
+        if not target_id and u_name:
+            for k, val in name_to_org_id.items():
+                if k and (k in u_name or u_name in k):
+                    target_id = val
+                    break
+        if target_id and u.get('organizationId') != target_id:
+            u['organizationId'] = target_id
+            users_sync = True
+    if users_sync: write_json(USERS_FILE, users)
+
+    complaints_sync = False
+    for c in complaints:
+        c_name = c.get('organizationName', '').strip().lower()
+        target_id = name_to_org_id.get(c_name)
+        if not target_id and c_name:
+            for k, val in name_to_org_id.items():
+                if k and (k in c_name or c_name in k):
+                    target_id = val
+                    break
+        if target_id and c.get('organizationId') != target_id:
+            c['organizationId'] = target_id
+            complaints_sync = True
+    if complaints_sync: write_json(COMPLAINTS_FILE, complaints)
 
     # Clean existing notifications (remove technical IDs)
     from utils.helpers import USE_MONGODB

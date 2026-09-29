@@ -28,17 +28,19 @@ def register_org():
     orgs = read_json(ORGANIZATIONS_FILE)
     admins = read_json(ADMINS_FILE)
 
-    if any(o['name'] == data['organizationName'] for o in orgs):
+    org_name = data['organizationName'].strip()
+
+    if any(o['name'].strip().lower() == org_name.lower() for o in orgs):
         return jsonify({"error": "Organization name already exists"}), 400
 
     org_id = generate_org_id()
 
     new_org = {
         "organizationId": org_id,
-        "name": data['organizationName'],
+        "name": org_name,
         "category": data['category'],
         "ownerName": data['ownerFullName'],
-        "email": data['email'],
+        "email": data['email'].strip(),
         "phone": data['phone'],
         "address": data['address'],
         "status": "PENDING",
@@ -48,11 +50,11 @@ def register_org():
     new_admin = {
         "userId": org_id, # Use same ID for simplicity
         "fullName": data['ownerFullName'],
-        "email": data['email'],
+        "email": data['email'].strip(),
         "password": data['password'],
         "role": "SECONDARY_ADMIN",
         "organizationId": org_id,
-        "organizationName": data['organizationName'],
+        "organizationName": org_name,
         "category": data['category'],
         "status": "PENDING"
     }

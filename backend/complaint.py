@@ -1,12 +1,47 @@
 from flask import Blueprint, request, jsonify
 from utils.helpers import read_json, write_json, get_current_date, get_current_time
 from utils.id_generator import generate_complaint_id
-from config import COMPLAINTS_FILE
+from config import COMPLAINTS_FILE, ORGANIZATIONS_FILE, ADMINS_FILE, USERS_FILE
 from ml_model import get_model_for_org
 from dsa import PriorityQueue
 from notification_utils import add_notification
 
 complaint_bp = Blueprint('complaint', __name__)
+
+def get_org_ids_for_org(org_id):
+    """Helper to find all related org IDs and org names for a given org_id."""
+    orgs = read_json(ORGANIZATIONS_FILE)
+    admins = read_json(ADMINS_FILE)
+
+    target_orgs = [o for o in orgs if o.get('organizationId') == org_id]
+    target_admins = [a for a in admins if a.get('organizationId') == org_id or a.get('userId') == org_id]
+
+    org_names = set()
+    emails = set()
+
+    for o in target_orgs:
+        if o.get('name'): org_names.add(o['name'].strip().lower())
+        if o.get('email'): emails.add(o['email'].strip().lower())
+
+    for a in target_admins:
+        if a.get('organizationName'): org_names.add(a['organizationName'].strip().lower())
+        if a.get('email'): emails.add(a['email'].strip().lower())
+
+    matching_ids = {org_id}
+
+    for o in orgs:
+        o_name = o.get('name', '').strip().lower()
+        o_email = o.get('email', '').strip().lower()
+        if (o_name and any(o_name in name or name in o_name for name in org_names if name)) or (o_email and o_email in emails):
+            if o.get('organizationId'): matching_ids.add(o['organizationId'])
+
+    for a in admins:
+        a_name = a.get('organizationName', '').strip().lower()
+        a_email = a.get('email', '').strip().lower()
+        if (a_name and any(a_name in name or name in a_name for name in org_names if name)) or (a_email and a_email in emails):
+            if a.get('organizationId'): matching_ids.add(a['organizationId'])
+
+    return matching_ids, org_names
 
 @complaint_bp.route('', methods=['POST'])
 def submit_complaint():
@@ -27,7 +62,7 @@ def submit_complaint():
         "userName": data['userName'],
         "userPhone": data.get('userPhone', ''),
         "organizationId": org_id,
-        "organizationName": data['organizationName'],
+        "organizationName": data['organizationName'].strip() if data.get('organizationName') else '',
         "category": data['category'],
         "locationDetails": data.get('locationDetails', ''), # New field for Room No / Flat No
         "complaint": complaint_text,
@@ -56,7 +91,15 @@ def get_user_complaints(user_id):
 @complaint_bp.route('/org/<org_id>', methods=['GET'])
 def get_org_complaints(org_id):
     complaints = read_json(COMPLAINTS_FILE)
-    org_complaints = [c for c in complaints if c['organizationId'] == org_id]
+    matching_ids, org_names = get_org_ids_for_org(org_id)
+
+    org_complaints = []
+    for c in complaints:
+        c_org_id = c.get('organizationId')
+        c_org_name = c.get('organizationName', '').strip().lower()
+        if c_org_id in matching_ids or (c_org_name and any(c_org_name in name or name in c_org_name for name in org_names if name)):
+            org_complaints.append(c)
+
     return jsonify(org_complaints), 200
 
 @complaint_bp.route('/<complaint_id>/resolve', methods=['PUT'])
@@ -126,7 +169,14 @@ def delete_complaint(complaint_id):
 @complaint_bp.route('/org/<org_id>/queue', methods=['GET'])
 def get_org_priority_queue(org_id):
     complaints = read_json(COMPLAINTS_FILE)
-    org_complaints = [c for c in complaints if c['organizationId'] == org_id and c['status'] != 'Resolved']
+    matching_ids, org_names = get_org_ids_for_org(org_id)
+
+    org_complaints = []
+    for c in complaints:
+        c_org_id = c.get('organizationId')
+        c_org_name = c.get('organizationName', '').strip().lower()
+        if (c_org_id in matching_ids or (c_org_name and any(c_org_name in name or name in c_org_name for name in org_names if name))) and c.get('status') != 'Resolved':
+            org_complaints.append(c)
 
     pq = PriorityQueue()
     for c in org_complaints:

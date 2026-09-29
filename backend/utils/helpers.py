@@ -2,19 +2,38 @@ import os
 import json
 import copy
 from datetime import datetime
-from pymongo import MongoClient
+from pymongo import MongoClient, ReplaceOne
 from config import MONGO_URI
 
 # Storage Mode Flag
 USE_MONGODB = True
 
 try:
-    # Initialize MongoDB Client with a timeout to prevent hanging on bad networks
-    client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000, connectTimeoutMS=5000)
-    # Trigger a command to check if connection/DNS resolution is working
+    # Optimized MongoClient with Connection Pooling for Deployment Speed
+    client = MongoClient(
+        MONGO_URI,
+        maxPoolSize=50,
+        minPoolSize=5,
+        maxIdleTimeMS=45000,
+        serverSelectionTimeoutMS=3000,
+        connectTimeoutMS=3000
+    )
     client.admin.command('ping')
     db = client.get_database()
+    USE_MONGODB = True
     print("✅ Successfully connected to MongoDB Cloud.")
+
+    # Create indexes for sub-millisecond query performance in deployment
+    try:
+        db['complaints'].create_index([("organizationId", 1)])
+        db['complaints'].create_index([("userId", 1)])
+        db['users'].create_index([("email", 1)])
+        db['users'].create_index([("userId", 1)])
+        db['admins'].create_index([("email", 1)])
+        db['admins'].create_index([("organizationId", 1)])
+        db['notifications'].create_index([("userId", 1)])
+    except Exception:
+        pass
 except Exception as e:
     USE_MONGODB = False
     db = None
@@ -35,14 +54,12 @@ def read_db(collection_name, query=None):
             query = {}
         return list(collection.find(query, {'_id': 0}))
     else:
-        # Fallback to local JSON files
         from config import DATA_DIR
         file_path = os.path.join(DATA_DIR, f"{collection_name}.json")
         if os.path.exists(file_path):
             with open(file_path, 'r') as f:
                 data = json.load(f)
                 if query:
-                    # Very basic filter mock for local JSON
                     return [d for d in data if all(d.get(k) == v for k, v in query.items())]
                 return data
         return []
@@ -57,7 +74,6 @@ def write_db(collection_name, data):
         else:
             collection.insert_one(copy.deepcopy(data))
     else:
-        # For writing in local mode, we reuse write_json logic
         from config import DATA_DIR
         file_path = os.path.join(DATA_DIR, f"{collection_name}.json")
         existing = read_db(collection_name)
@@ -100,7 +116,6 @@ def delete_db(collection_name, query):
         with open(file_path, 'w') as f:
             json.dump(filtered, f, indent=4)
 
-# Legacy support for internal logic that hasn't switched to explicit DB calls
 def read_json(file_path):
     collection_map = {
         'users.json': 'users',
@@ -108,7 +123,8 @@ def read_json(file_path):
         'organizations.json': 'organizations',
         'categories.json': 'categories',
         'complaints.json': 'complaints',
-        'dataset_requests.json': 'dataset_requests'
+        'dataset_requests.json': 'dataset_requests',
+        'notifications.json': 'notifications'
     }
     file_name = os.path.basename(file_path)
     collection_name = collection_map.get(file_name, file_name.replace('.json', ''))
@@ -121,16 +137,46 @@ def write_json(file_path, data):
         'organizations.json': 'organizations',
         'categories.json': 'categories',
         'complaints.json': 'complaints',
-        'dataset_requests.json': 'dataset_requests'
+        'dataset_requests.json': 'dataset_requests',
+        'notifications.json': 'notifications'
     }
     file_name = os.path.basename(file_path)
     collection_name = collection_map.get(file_name, file_name.replace('.json', ''))
 
     if USE_MONGODB:
         collection = db[collection_name]
-        collection.delete_many({})
-        if data:
-            collection.insert_many(copy.deepcopy(data))
+        if not data:
+            collection.delete_many({})
+            return
+
+        id_key_map = {
+            'users': 'userId',
+            'admins': 'userId',
+            'organizations': 'organizationId',
+            'categories': 'categoryId',
+            'complaints': 'complaintId',
+            'dataset_requests': 'requestId',
+            'notifications': 'notificationId'
+        }
+        id_key = id_key_map.get(collection_name)
+
+        if id_key:
+            ops = []
+            current_ids = []
+            for item in data:
+                if isinstance(item, dict) and id_key in item:
+                    item_id = item[id_key]
+                    current_ids.append(item_id)
+                    ops.append(ReplaceOne({id_key: item_id}, copy.deepcopy(item), upsert=True))
+
+            if ops:
+                collection.bulk_write(ops, ordered=False)
+                if current_ids:
+                    collection.delete_many({id_key: {"$nin": current_ids}})
+        else:
+            collection.delete_many({})
+            if data:
+                collection.insert_many(copy.deepcopy(data))
     else:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
         with open(file_path, 'w') as f:

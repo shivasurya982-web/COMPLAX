@@ -22,9 +22,9 @@ const SecondaryAdminDashboard = () => {
         const complaints = response.data;
         setStats({
           total: complaints.length,
-          high: complaints.filter(c => c.priority === 'HIGH').length,
-          medium: complaints.filter(c => c.priority === 'MEDIUM').length,
-          low: complaints.filter(c => c.priority === 'LOW').length,
+          high: complaints.filter(c => c.priority?.toUpperCase() === 'HIGH').length,
+          medium: complaints.filter(c => c.priority?.toUpperCase() === 'MEDIUM').length,
+          low: complaints.filter(c => c.priority?.toUpperCase() === 'LOW').length,
           pending: complaints.filter(c => c.status !== 'Resolved').length,
           resolved: complaints.filter(c => c.status === 'Resolved').length
         });
