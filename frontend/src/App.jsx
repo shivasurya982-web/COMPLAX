@@ -3,6 +3,7 @@ import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
 // Pages
+import Home from './pages/Home';
 import Login from './pages/auth/Login';
 import UserRegister from './pages/auth/UserRegister';
 import SecondaryAdminRegister from './pages/auth/SecondaryAdminRegister';
@@ -66,7 +67,9 @@ const App = () => {
     <AuthProvider>
       <AppLayout>
         <Routes>
-          <Route path="/" element={<Login />} />
+          <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/register" element={<UserRegister />} />
           <Route path="/register-org" element={<SecondaryAdminRegister />} />
 

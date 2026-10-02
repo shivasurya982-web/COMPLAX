@@ -71,7 +71,7 @@ const Users = () => {
 
   return (
     <div className="animate-fade">
-      <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+      <div style={{ marginBottom: '2.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h2 className="dashboard-title">User Management</h2>
           <p className="dashboard-subtitle">Manage all registered residents and users across organizations.</p>

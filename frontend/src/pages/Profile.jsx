@@ -60,7 +60,7 @@ const Profile = () => {
             width: '80px',
             height: '80px',
             borderRadius: '20px',
-            background: 'rgba(242, 166, 117, 0.1)',
+            background: 'rgba(224, 109, 67, 0.1)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -99,7 +99,7 @@ const Profile = () => {
         )}
 
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+          <div className="responsive-grid">
             <div className="form-group">
               <label>Full Name</label>
               <div style={{ position: 'relative' }}>
@@ -131,7 +131,7 @@ const Profile = () => {
               </div>
             )}
             {user.role === 'SECONDARY_ADMIN' && (
-              <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <div className="form-group" style={{ gridColumn: '1 / -1' }}>
                 <label>Office Address</label>
                 <div style={{ position: 'relative' }}>
                   <MapPin size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
@@ -139,7 +139,7 @@ const Profile = () => {
                 </div>
               </div>
             )}
-            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
               <label>Update Password (Leave blank to keep current)</label>
               <div style={{ position: 'relative' }}>
                 <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />

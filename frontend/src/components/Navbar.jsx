@@ -92,7 +92,7 @@ const Navbar = ({ onToggleSidebar }) => {
               position: 'absolute',
               top: '40px',
               right: '0',
-              width: '320px',
+              width: 'min(320px, calc(100vw - 32px))',
               maxHeight: '400px',
               overflowY: 'auto',
               zIndex: 1000,

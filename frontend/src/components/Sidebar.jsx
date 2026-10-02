@@ -13,6 +13,8 @@ import {
   Zap
 } from 'lucide-react';
 
+import Logo from './Logo';
+
 const Sidebar = ({ isOpen }) => {
   const { user, logout } = useAuth();
 
@@ -46,12 +48,8 @@ const Sidebar = ({ isOpen }) => {
 
   return (
     <div className={`sidebar ${isOpen ? 'open' : ''}`}>
-      <div className="sidebar-logo-container">
-        <div className="sidebar-logo">
-          <Zap fill="var(--primary)" size={24} />
-          <span>COMPLAX</span>
-        </div>
-        <div className="sidebar-tagline">Smart Complaint Management</div>
+      <div className="sidebar-logo-container" style={{ marginBottom: '2rem' }}>
+        <Logo height={30} showTagline={true} />
       </div>
 
       <nav style={{ flex: 1 }}>

@@ -127,7 +127,7 @@ const Organizations = () => {
                           width: '32px',
                           height: '32px',
                           borderRadius: '8px',
-                          background: 'rgba(242, 166, 117, 0.05)',
+                          background: 'rgba(224, 109, 67, 0.05)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -229,9 +229,10 @@ const Organizations = () => {
           alignItems: 'center',
           justifyContent: 'center',
           zIndex: 2000,
-          padding: '2rem'
+          padding: 'clamp(0.75rem, 3vw, 2rem)',
+          overflowY: 'auto'
         }} onClick={() => setSelectedOrg(null)}>
-          <div className="card animate-fade" style={{ width: '100%', maxWidth: '600px', position: 'relative' }} onClick={e => e.stopPropagation()}>
+          <div className="card animate-fade" style={{ width: '100%', maxWidth: '600px', maxHeight: '90vh', overflowY: 'auto', position: 'relative' }} onClick={e => e.stopPropagation()}>
             <button
               style={{ position: 'absolute', top: '1.5rem', right: '1.5rem', background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
               onClick={() => setSelectedOrg(null)}
@@ -245,7 +246,7 @@ const Organizations = () => {
                   width: '48px',
                   height: '48px',
                   borderRadius: '12px',
-                  background: 'rgba(242, 166, 117, 0.1)',
+                  background: 'rgba(224, 109, 67, 0.1)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -260,7 +261,7 @@ const Organizations = () => {
               </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+            <div className="responsive-grid">
               <div>
                 <DetailItem label="Owner Name" value={selectedOrg.ownerName} icon={<User size={14} />} />
                 <DetailItem label="Category" value={selectedOrg.category} icon={<Tags size={14} />} />

@@ -32,7 +32,7 @@ const MyOrganization = () => {
 
       <div className="card" style={{ maxWidth: '600px', overflow: 'hidden' }}>
         <div style={{
-          background: 'linear-gradient(to right, rgba(242, 166, 117, 0.1), transparent)',
+          background: 'linear-gradient(to right, rgba(224, 109, 67, 0.1), transparent)',
           margin: '-1.5rem -1.5rem 1.5rem -1.5rem',
           padding: '2rem 1.5rem',
           borderBottom: '1px solid var(--border)',
@@ -62,7 +62,7 @@ const MyOrganization = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+        <div className="responsive-grid">
           <div>
             <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Tags size={14} /> Category

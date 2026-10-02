@@ -61,7 +61,7 @@ const SecondaryAdminDashboard = () => {
         ))}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem', marginTop: '1rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '2rem', marginTop: '1rem' }}>
         <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
           <div>
             <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>QUICK ACTIONS</h3>
@@ -177,7 +177,7 @@ const SecondaryAdminDashboard = () => {
       <style>{`
         .hover-action:hover {
           background: rgba(255, 255, 255, 0.06) !important;
-          border-color: rgba(242, 166, 117, 0.3) !important;
+          border-color: rgba(224, 109, 67, 0.3) !important;
           transform: translateX(4px);
         }
       `}</style>

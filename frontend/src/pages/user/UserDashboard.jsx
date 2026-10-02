@@ -107,7 +107,7 @@ const UserDashboard = () => {
           right: 0,
           width: '150px',
           height: '150px',
-          background: 'radial-gradient(circle, rgba(242, 166, 117, 0.05) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(224, 109, 67, 0.05) 0%, transparent 70%)',
           zIndex: 0
         }}></div>
 
@@ -120,7 +120,7 @@ const UserDashboard = () => {
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            <div className="responsive-grid" style={{ marginBottom: '1.5rem' }}>
               <div className="form-group" style={{ marginBottom: 0 }}>
                 <label>REPORTER NAME</label>
                 <input

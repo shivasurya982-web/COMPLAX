@@ -32,13 +32,13 @@ def get_org_ids_for_org(org_id):
     for o in orgs:
         o_name = o.get('name', '').strip().lower()
         o_email = o.get('email', '').strip().lower()
-        if (o_name and any(o_name in name or name in o_name for name in org_names if name)) or (o_email and o_email in emails):
+        if (o_name and o_name in org_names) or (o_email and o_email in emails):
             if o.get('organizationId'): matching_ids.add(o['organizationId'])
 
     for a in admins:
         a_name = a.get('organizationName', '').strip().lower()
         a_email = a.get('email', '').strip().lower()
-        if (a_name and any(a_name in name or name in a_name for name in org_names if name)) or (a_email and a_email in emails):
+        if (a_name and a_name in org_names) or (a_email and a_email in emails):
             if a.get('organizationId'): matching_ids.add(a['organizationId'])
 
     return matching_ids, org_names
@@ -85,7 +85,7 @@ def submit_complaint():
 @complaint_bp.route('/user/<user_id>', methods=['GET'])
 def get_user_complaints(user_id):
     complaints = read_json(COMPLAINTS_FILE)
-    user_complaints = [c for c in complaints if c['userId'] == user_id]
+    user_complaints = [c for c in complaints if c.get('userId') == user_id]
     return jsonify(user_complaints), 200
 
 @complaint_bp.route('/org/<org_id>', methods=['GET'])
@@ -97,7 +97,7 @@ def get_org_complaints(org_id):
     for c in complaints:
         c_org_id = c.get('organizationId')
         c_org_name = c.get('organizationName', '').strip().lower()
-        if c_org_id in matching_ids or (c_org_name and any(c_org_name in name or name in c_org_name for name in org_names if name)):
+        if c_org_id in matching_ids or (c_org_name and c_org_name in org_names):
             org_complaints.append(c)
 
     return jsonify(org_complaints), 200
@@ -175,7 +175,7 @@ def get_org_priority_queue(org_id):
     for c in complaints:
         c_org_id = c.get('organizationId')
         c_org_name = c.get('organizationName', '').strip().lower()
-        if (c_org_id in matching_ids or (c_org_name and any(c_org_name in name or name in c_org_name for name in org_names if name))) and c.get('status') != 'Resolved':
+        if (c_org_id in matching_ids or (c_org_name and c_org_name in org_names)) and c.get('status') != 'Resolved':
             org_complaints.append(c)
 
     pq = PriorityQueue()

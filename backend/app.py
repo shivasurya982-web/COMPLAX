@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, send_from_directory
 from flask_cors import CORS
 import os
 import sys
@@ -106,32 +106,23 @@ def init_app():
 
     users_sync = False
     for u in users:
-        u_name = u.get('organizationName', '').strip().lower()
-        u_email = u.get('studentResidentId', '').strip().lower()
-        u_user_email = u.get('email', '').strip().lower()
-        target_id = email_to_org_id.get(u_email) or email_to_org_id.get(u_user_email) or name_to_org_id.get(u_name)
-        if not target_id and u_name:
-            for k, val in name_to_org_id.items():
-                if k and (k in u_name or u_name in k):
-                    target_id = val
-                    break
-        if target_id and u.get('organizationId') != target_id:
-            u['organizationId'] = target_id
-            users_sync = True
+        if not u.get('organizationId'):
+            u_name = u.get('organizationName', '').strip().lower()
+            u_user_email = u.get('email', '').strip().lower()
+            target_id = email_to_org_id.get(u_user_email) or name_to_org_id.get(u_name)
+            if target_id:
+                u['organizationId'] = target_id
+                users_sync = True
     if users_sync: write_json(USERS_FILE, users)
 
     complaints_sync = False
     for c in complaints:
-        c_name = c.get('organizationName', '').strip().lower()
-        target_id = name_to_org_id.get(c_name)
-        if not target_id and c_name:
-            for k, val in name_to_org_id.items():
-                if k and (k in c_name or c_name in k):
-                    target_id = val
-                    break
-        if target_id and c.get('organizationId') != target_id:
-            c['organizationId'] = target_id
-            complaints_sync = True
+        if not c.get('organizationId'):
+            c_name = c.get('organizationName', '').strip().lower()
+            target_id = name_to_org_id.get(c_name)
+            if target_id:
+                c['organizationId'] = target_id
+                complaints_sync = True
     if complaints_sync: write_json(COMPLAINTS_FILE, complaints)
 
     # Clean existing notifications (remove technical IDs)
@@ -169,6 +160,17 @@ def init_app():
         print("Training default ML model...")
         default_model.train()
         print("Default ML model trained successfully.")
+
+# Serve React Frontend in production
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve_frontend(path):
+    dist_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'frontend', 'dist')
+    if path != "" and os.path.exists(os.path.join(dist_dir, path)):
+        return send_from_directory(dist_dir, path)
+    elif os.path.exists(os.path.join(dist_dir, 'index.html')):
+        return send_from_directory(dist_dir, 'index.html')
+    return "COMPLAX API is running. Build frontend using 'npm run build' inside /frontend.", 200
 
 if __name__ == '__main__':
     init_app()

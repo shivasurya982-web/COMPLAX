@@ -197,7 +197,7 @@ const DatasetApprovals = () => {
       <div className="card" style={{ marginBottom: '3rem', borderLeft: '6px solid var(--primary)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(242, 166, 117, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
+            <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: 'rgba(224, 109, 67, 0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--primary)' }}>
               <Globe size={24} />
             </div>
             <div>
@@ -211,7 +211,7 @@ const DatasetApprovals = () => {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(450px, 1fr))', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '2rem' }}>
         {/* Pending Requests */}
         <div className="card">
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--status-pending)', marginBottom: '1.5rem' }}>

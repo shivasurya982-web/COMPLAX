@@ -230,7 +230,7 @@ const OrganizationDataset = () => {
       <style>{`
         .file-dropzone:hover {
           border-color: var(--primary);
-          background: rgba(242, 166, 117, 0.04) !important;
+          background: rgba(224, 109, 67, 0.04) !important;
         }
       `}</style>
     </div>

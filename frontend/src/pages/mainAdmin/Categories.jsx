@@ -55,7 +55,7 @@ const Categories = () => {
         <p className="dashboard-subtitle">Manage organization types available for registration.</p>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '2rem' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(260px, 100%), 1fr))', gap: '2rem' }}>
         <div className="card" style={{ height: 'fit-content' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)', marginBottom: '1.5rem' }}>
             <Plus size={20} />
