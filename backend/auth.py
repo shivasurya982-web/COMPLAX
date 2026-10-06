@@ -27,6 +27,7 @@ def register_user():
         "email": data['email'],
         "phone": data['phone'],
         "password": data['password'],
+        "recoveryHint": data.get('recoveryHint', ''),
         "organizationId": data['organizationId'],
         "organizationName": org['name'],
         "category": org['category'],
@@ -94,6 +95,8 @@ def update_profile():
             if u['userId'] == user_id:
                 u['fullName'] = data.get('fullName', u['fullName'])
                 u['phone'] = data.get('phone', u['phone'])
+                if 'recoveryHint' in data:
+                    u['recoveryHint'] = data['recoveryHint']
                 if 'password' in data and data['password']:
                     u['password'] = data['password']
                 updated = True
@@ -107,7 +110,17 @@ def update_profile():
     elif role == 'SECONDARY_ADMIN':
         from utils.helpers import db, get_current_date, get_current_time
         import uuid
-        # Secondary Admins (Organizations) submit a request
+
+        # Also update admin collection directly if recoveryHint is updated
+        admins = read_json(ADMINS_FILE)
+        for a in admins:
+            if a.get('organizationId') == user_id or a.get('userId') == user_id:
+                if 'recoveryHint' in data:
+                    a['recoveryHint'] = data['recoveryHint']
+                break
+        write_json(ADMINS_FILE, admins)
+
+        # Secondary Admins (Organizations) submit a request for other profile details
         requests_col = db['profile_update_requests']
         requests_col.insert_one({
             "requestId": str(uuid.uuid4()),
@@ -118,6 +131,7 @@ def update_profile():
             "phone": data.get('phone'),
             "address": data.get('address'),
             "password": data.get('password'),
+            "recoveryHint": data.get('recoveryHint'),
             "status": "PENDING",
             "date": get_current_date(),
             "time": get_current_time()
@@ -214,6 +228,90 @@ def delete_user(user_id):
     users = [u for u in users if u['userId'] != user_id]
     write_json(USERS_FILE, users)
     return jsonify({"message": "User deleted successfully"}), 200
+
+@auth_bp.route('/forgot-password/check-email', methods=['POST'])
+def check_email_forgot_password():
+    data = request.json or {}
+    email = data.get('email', '').strip().lower()
+
+    if not email:
+        return jsonify({"error": "Please enter your email address."}), 400
+
+    users = read_json(USERS_FILE)
+    admins = read_json(ADMINS_FILE)
+
+    account = next((u for u in users if u.get('email', '').lower() == email), None)
+    if not account:
+        account = next((a for a in admins if a.get('email', '').lower() == email), None)
+
+    if not account:
+        return jsonify({"error": "No account found with this email address."}), 404
+
+    return jsonify({"message": "Email verified", "email": email}), 200
+
+@auth_bp.route('/forgot-password/verify-hint', methods=['POST'])
+def verify_hint_forgot_password():
+    data = request.json or {}
+    email = data.get('email', '').strip().lower()
+    hint = data.get('recoveryHint', '').strip().lower()
+
+    if not email or not hint:
+        return jsonify({"error": "Email and recovery hint are required."}), 400
+
+    users = read_json(USERS_FILE)
+    admins = read_json(ADMINS_FILE)
+
+    account = next((u for u in users if u.get('email', '').lower() == email), None)
+    if not account:
+        account = next((a for a in admins if a.get('email', '').lower() == email), None)
+
+    if not account:
+        return jsonify({"error": "Account not found."}), 404
+
+    saved_hint = account.get('recoveryHint', '').strip().lower()
+
+    if not saved_hint:
+        return jsonify({"error": "No recovery hint was set for this account."}), 400
+
+    if saved_hint != hint:
+        return jsonify({"error": "Incorrect recovery hint. Please try again."}), 400
+
+    return jsonify({"message": "Recovery hint verified successfully."}), 200
+
+@auth_bp.route('/forgot-password/reset', methods=['POST'])
+def reset_password_forgot_password():
+    data = request.json or {}
+    email = data.get('email', '').strip().lower()
+    hint = data.get('recoveryHint', '').strip().lower()
+    new_password = data.get('newPassword')
+
+    if not new_password or len(new_password) < 4:
+        return jsonify({"error": "Password must be at least 4 characters long."}), 400
+
+    users = read_json(USERS_FILE)
+    admins = read_json(ADMINS_FILE)
+
+    # Check users
+    for u in users:
+        if u.get('email', '').lower() == email:
+            if u.get('recoveryHint', '').strip().lower() == hint:
+                u['password'] = new_password
+                write_json(USERS_FILE, users)
+                return jsonify({"message": "Password reset successfully. You can now log in."}), 200
+            else:
+                return jsonify({"error": "Recovery hint verification failed."}), 400
+
+    # Check admins
+    for a in admins:
+        if a.get('email', '').lower() == email:
+            if a.get('recoveryHint', '').strip().lower() == hint:
+                a['password'] = new_password
+                write_json(ADMINS_FILE, admins)
+                return jsonify({"message": "Password reset successfully. You can now log in."}), 200
+            else:
+                return jsonify({"error": "Recovery hint verification failed."}), 400
+
+    return jsonify({"error": "Account not found."}), 404
 
 @auth_bp.route('/user/login', methods=['POST'])
 def login_user():

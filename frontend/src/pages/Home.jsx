@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
+import { loadThree } from '../utils/threeLoader';
 
 const Home = () => {
   useEffect(() => {
@@ -264,21 +265,9 @@ rig('org',12.5,function(G0){
   return function(t){if(t-last>.1){draw(t);last=t}bd.position.y=1.9+Math.sin(t*1.6)*.15;bd.rotation.y=Math.sin(t*.9)*.35}});
     };
 
-    // Load Three.js (r128). Falls back to a second CDN if the first is blocked.
-    const load = (src, onFail) => {
-      const script = document.createElement('script');
-      script.src = src;
-      script.async = true;
-      script.onload = () => { if (active) initThreeScenes(); };
-      script.onerror = onFail || (() => {});
-      document.body.appendChild(script);
-    };
-    if (!window.THREE) {
-      load('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-        () => load('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'));
-    } else {
-      initThreeScenes();
-    }
+    loadThree().then(() => {
+      if (active) initThreeScenes();
+    }).catch(() => {});
 
     return () => {
       active = false;
@@ -345,9 +334,7 @@ html{scroll-behavior:smooth}
       `}</style>
 
       <nav>
-        <Link to="/" style={{ textDecoration: 'none' }}>
-          <Logo height={32} showTagline={false} />
-        </Link>
+        <div style={{ width: '40px' }}></div>
         <div className="links">
           <a href="#how">How it works</a>
           <a href="#orgs">For organizations</a>
@@ -361,6 +348,9 @@ html{scroll-behavior:smooth}
 
       <section className="two">
         <div>
+          <div style={{ marginBottom: '2.5 rem' }}>
+            <Logo height={150} showTagline={true} />
+          </div>
           <h1>Every complaint. <span>One place.</span></h1>
           <p className="lead">Submit a complaint about any organization or service, let the concerned team handle it, and track its progress until it is resolved.</p>
           <div className="cta">

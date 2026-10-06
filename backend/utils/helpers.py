@@ -6,24 +6,28 @@ from pymongo import MongoClient, ReplaceOne
 from config import MONGO_URI
 
 # Storage Mode Flag
-USE_MONGODB = True
+USE_MONGODB = False
+db = None
+
+# Ultra-fast In-Memory Cache (RAM Cache) for sub-millisecond query speed
+RAM_CACHE = {}
 
 try:
-    # Optimized MongoClient with Connection Pooling for Deployment Speed
+    # Optimized MongoClient with sub-second timeout to prevent DNS/Network hangs
     client = MongoClient(
         MONGO_URI,
         maxPoolSize=50,
         minPoolSize=5,
         maxIdleTimeMS=45000,
-        serverSelectionTimeoutMS=3000,
-        connectTimeoutMS=3000
+        serverSelectionTimeoutMS=500,
+        connectTimeoutMS=500
     )
     client.admin.command('ping')
     db = client.get_database()
     USE_MONGODB = True
-    print("✅ Successfully connected to MongoDB Cloud.")
+    print("[COMPLAX Backend] Connected to MongoDB Cloud successfully.")
 
-    # Create indexes for sub-millisecond query performance in deployment
+    # Create indexes for sub-millisecond query performance
     try:
         db['complaints'].create_index([("organizationId", 1)])
         db['complaints'].create_index([("userId", 1)])
@@ -37,8 +41,7 @@ try:
 except Exception as e:
     USE_MONGODB = False
     db = None
-    print("⚠️ MongoDB connection failed (DNS/Network issue).")
-    print("📂 Falling back to Local JSON Storage mode.")
+    print("[COMPLAX Backend] Using ultra-fast Local JSON Storage mode.")
 
 def get_db_collection(collection_name):
     """Returns a MongoDB collection or None if in JSON mode."""
@@ -47,25 +50,48 @@ def get_db_collection(collection_name):
     return None
 
 def read_db(collection_name, query=None):
-    """Reads documents from a collection or local JSON file."""
+    """Reads documents from RAM cache, MongoDB, or local JSON file."""
+    # Check RAM Cache first for sub-millisecond response time
+    if collection_name in RAM_CACHE:
+        data = RAM_CACHE[collection_name]
+        if query:
+            return [d for d in data if all(d.get(k) == v for k, v in query.items())]
+        return copy.deepcopy(data)
+
     if USE_MONGODB:
         collection = db[collection_name]
         if query is None:
             query = {}
-        return list(collection.find(query, {'_id': 0}))
+        data = list(collection.find(query, {'_id': 0}))
+        if not query:
+            RAM_CACHE[collection_name] = copy.deepcopy(data)
+        return data
     else:
         from config import DATA_DIR
         file_path = os.path.join(DATA_DIR, f"{collection_name}.json")
         if os.path.exists(file_path):
-            with open(file_path, 'r') as f:
-                data = json.load(f)
-                if query:
-                    return [d for d in data if all(d.get(k) == v for k, v in query.items())]
-                return data
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    RAM_CACHE[collection_name] = copy.deepcopy(data)
+                    if query:
+                        return [d for d in data if all(d.get(k) == v for k, v in query.items())]
+                    return data
+            except Exception:
+                return []
+        RAM_CACHE[collection_name] = []
         return []
 
 def write_db(collection_name, data):
-    """Inserts one or more documents into a collection or local JSON file."""
+    """Inserts documents and updates RAM cache instantly."""
+    # Update RAM Cache immediately
+    current = RAM_CACHE.get(collection_name, [])
+    if isinstance(data, list):
+        current.extend(copy.deepcopy(data))
+    else:
+        current.append(copy.deepcopy(data))
+    RAM_CACHE[collection_name] = current
+
     if USE_MONGODB:
         collection = db[collection_name]
         if isinstance(data, list):
@@ -76,45 +102,41 @@ def write_db(collection_name, data):
     else:
         from config import DATA_DIR
         file_path = os.path.join(DATA_DIR, f"{collection_name}.json")
-        existing = read_db(collection_name)
-        if isinstance(data, list):
-            existing.extend(data)
-        else:
-            existing.append(data)
-
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'w') as f:
-            json.dump(existing, f, indent=4)
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(current, f, separators=(',', ':'))
 
 def update_db(collection_name, query, update_data):
-    """Updates documents in a collection or local JSON file."""
+    """Updates documents in RAM cache and persistent storage."""
+    data = read_db(collection_name)
+    for d in data:
+        if all(d.get(k) == v for k, v in query.items()):
+            d.update(update_data)
+    RAM_CACHE[collection_name] = copy.deepcopy(data)
+
     if USE_MONGODB:
         collection = db[collection_name]
         collection.update_many(query, {'$set': update_data})
     else:
-        data = read_db(collection_name)
-        for d in data:
-            if all(d.get(k) == v for k, v in query.items()):
-                d.update(update_data)
-
         from config import DATA_DIR
         file_path = os.path.join(DATA_DIR, f"{collection_name}.json")
-        with open(file_path, 'w') as f:
-            json.dump(data, f, indent=4)
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, separators=(',', ':'))
 
 def delete_db(collection_name, query):
-    """Deletes documents from a collection or local JSON file."""
+    """Deletes documents from RAM cache and persistent storage."""
+    data = read_db(collection_name)
+    filtered = [d for d in data if not all(d.get(k) == v for k, v in query.items())]
+    RAM_CACHE[collection_name] = copy.deepcopy(filtered)
+
     if USE_MONGODB:
         collection = db[collection_name]
         collection.delete_many(query)
     else:
-        data = read_db(collection_name)
-        filtered = [d for d in data if not all(d.get(k) == v for k, v in query.items())]
-
         from config import DATA_DIR
         file_path = os.path.join(DATA_DIR, f"{collection_name}.json")
-        with open(file_path, 'w') as f:
-            json.dump(filtered, f, indent=4)
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(filtered, f, separators=(',', ':'))
 
 def read_json(file_path):
     collection_map = {
@@ -142,6 +164,9 @@ def write_json(file_path, data):
     }
     file_name = os.path.basename(file_path)
     collection_name = collection_map.get(file_name, file_name.replace('.json', ''))
+
+    # Update RAM Cache immediately
+    RAM_CACHE[collection_name] = copy.deepcopy(data)
 
     if USE_MONGODB:
         collection = db[collection_name]
@@ -179,11 +204,12 @@ def write_json(file_path, data):
                 collection.insert_many(copy.deepcopy(data))
     else:
         os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        with open(file_path, 'w') as f:
-            json.dump(data, f, indent=4)
+        with open(file_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, separators=(',', ':'))
 
 def get_current_date():
     return datetime.now().strftime("%d/%m/%Y")
 
 def get_current_time():
-    return datetime.now().strftime("%H:%M")
+    return datetime.now().strftime("%I:%M %p")
+

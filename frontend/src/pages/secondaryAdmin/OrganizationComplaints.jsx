@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { Search, Filter, MessageSquare, User, MapPin, Calendar, ShieldCheck } from 'lucide-react';
+import { formatTime12Hour } from '../../utils/formatDate';
 
 const OrganizationComplaints = () => {
   const { user } = useAuth();
@@ -97,7 +98,7 @@ const OrganizationComplaints = () => {
                         <div>
                           <div style={{ fontWeight: 500, color: 'var(--text-main)', marginBottom: '4px' }}>{c.complaint}</div>
                           <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={12} /> {c.date}</span>
+                            <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><Calendar size={12} /> {c.date} {c.time ? `at ${formatTime12Hour(c.time)}` : ''}</span>
                             <span>ID: {c.complaintId}</span>
                           </div>
                         </div>

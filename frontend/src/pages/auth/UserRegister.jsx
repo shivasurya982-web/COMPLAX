@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import api from '../../services/api';
 import { Eye, EyeOff, User, Mail, Phone, Building, Hash, Lock, Zap, ArrowLeft } from 'lucide-react';
+import Logo from '../../components/Logo';
 
 /* ------------------------------------------------------------------ */
 /*  3D scene: the CITIZEN VOICE PASS                                   */
@@ -14,16 +15,8 @@ import { Eye, EyeOff, User, Mail, Phone, Building, Hash, Lock, Zap, ArrowLeft } 
 /*  - pressing Create Account: the pass spins and a scanner sweeps it  */
 /*  - on error the pass turns red; drag to rotate the whole scene      */
 /* ------------------------------------------------------------------ */
-const loadThree = (onReady) => {
-  if (window.THREE) { onReady(); return; }
-  const add = (src, onFail) => {
-    const s = document.createElement('script');
-    s.src = src; s.async = true; s.onload = onReady; s.onerror = onFail || (() => {});
-    document.body.appendChild(s);
-  };
-  add('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-    () => add('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'));
-};
+import { loadThree } from '../../utils/threeLoader';
+
 
 const FIELD_COUNT = 7;
 
@@ -258,7 +251,7 @@ const PassScene = ({ filled, name, studentId, orgName, category, email, phone, s
       };
     };
 
-    loadThree(() => { if (active) init(); });
+    loadThree().then(() => { if (active) init(); }).catch(() => {});
     return () => { active = false; cleanup(); };
   }, []);
 
@@ -277,6 +270,7 @@ const UserRegister = () => {
     phone: '',
     password: '',
     confirmPassword: '',
+    recoveryHint: '',
     organizationId: ''
   });
   const [showPassword, setShowPassword] = useState(false);
@@ -378,13 +372,10 @@ const UserRegister = () => {
             <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
               <div style={{
                 display: 'inline-flex',
-                alignItems: 'center',
-                gap: '12px',
-                marginBottom: '0.75rem',
-                color: 'var(--primary)'
+                justifyContent: 'center',
+                marginBottom: '0.75rem'
               }}>
-                <Zap size={28} fill="var(--primary)" />
-                <h1 style={{ fontSize: '2rem', letterSpacing: '-0.05em', color: 'var(--text-main)' }}>COMPLAX</h1>
+                <Logo height={52} showTagline={true} />
               </div>
               <h2 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>User Registration</h2>
               <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem' }}>Create your account to start reporting issues.</p>
@@ -507,6 +498,26 @@ const UserRegister = () => {
                     </button>
                   </div>
                 </div>
+              </div>
+
+              <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                <label>Password Recovery Hint</label>
+                <div style={{ position: 'relative' }}>
+                  <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                  <input
+                    type="text"
+                    name="recoveryHint"
+                    className="form-control"
+                    style={{ paddingLeft: '40px' }}
+                    placeholder="e.g. Favorite pet, birth city, secret word"
+                    value={formData.recoveryHint}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                  Used to verify your identity if you forget your password.
+                </small>
               </div>
 
               <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={loading}>

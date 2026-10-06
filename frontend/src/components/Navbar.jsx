@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { User, Menu, Bell, X } from 'lucide-react';
+import { User, Menu, Bell, X, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
+import { formatTime12Hour } from '../utils/formatDate';
 
 const Navbar = ({ onToggleSidebar }) => {
   const { user } = useAuth();
@@ -38,6 +39,26 @@ const Navbar = ({ onToggleSidebar }) => {
       } catch (err) {
         console.error("Failed to mark read");
       }
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId, e) => {
+    if (e) e.stopPropagation();
+    try {
+      await api.delete(`/notifications/${notificationId}`);
+      setNotifications(prev => prev.filter(n => n.notificationId !== notificationId));
+    } catch (err) {
+      console.error("Failed to delete notification");
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      await api.delete(`/notifications/clear/${user.userId}`);
+      setNotifications([]);
+      setUnreadCount(0);
+    } catch (err) {
+      console.error("Failed to clear notifications");
     }
   };
 
@@ -88,33 +109,76 @@ const Navbar = ({ onToggleSidebar }) => {
           </button>
 
           {showNotifications && (
-            <div className="card animate-fade" style={{
+            <div className="animate-fade" style={{
               position: 'absolute',
-              top: '40px',
-              right: '0',
-              width: 'min(320px, calc(100vw - 32px))',
-              maxHeight: '400px',
+              top: '48px',
+              right: '-10px',
+              width: '340px',
+              minWidth: '280px',
+              maxWidth: 'calc(100vw - 32px)',
+              maxHeight: '420px',
               overflowY: 'auto',
-              zIndex: 1000,
-              padding: '1rem',
-              border: '1px solid var(--border)'
+              zIndex: 9999,
+              padding: '1.25rem',
+              background: 'var(--bg-card)',
+              border: '1px solid var(--border)',
+              borderRadius: '16px',
+              boxShadow: '0 12px 36px rgba(0, 0, 0, 0.6)',
+              boxSizing: 'border-box',
+              display: 'block',
+              writingMode: 'horizontal-tb'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <h4 style={{ fontSize: '0.9rem' }}>Notifications</h4>
-                <X size={16} cursor="pointer" onClick={() => setShowNotifications(false)} />
+                <h4 style={{ fontSize: '0.9rem', fontWeight: 700 }}>Notifications</h4>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {notifications.length > 0 && (
+                    <button
+                      onClick={handleClearAll}
+                      style={{ background: 'transparent', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 600 }}
+                    >
+                      Clear All
+                    </button>
+                  )}
+                  <X size={16} cursor="pointer" onClick={() => setShowNotifications(false)} />
+                </div>
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {notifications.length > 0 ? (
                   notifications.map(n => (
                     <div key={n.notificationId} style={{
-                      padding: '10px',
+                      padding: '10px 12px',
                       borderRadius: '8px',
                       background: n.isRead ? 'transparent' : 'rgba(255,255,255,0.03)',
                       border: '1px solid var(--border)',
-                      fontSize: '0.8rem'
+                      fontSize: '0.8rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'flex-start',
+                      gap: '8px'
                     }}>
-                      <div style={{ color: 'var(--text-main)', marginBottom: '4px' }}>{n.message}</div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{n.date} at {n.time}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ color: 'var(--text-main)', marginBottom: '4px', lineHeight: '1.4' }}>{n.message}</div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '0.7rem' }}>{n.date} at {formatTime12Hour(n.time)}</div>
+                      </div>
+                      <button
+                        onClick={(e) => handleDeleteNotification(n.notificationId, e)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          cursor: 'pointer',
+                          padding: '2px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'var(--transition)'
+                        }}
+                        title="Delete notification"
+                        onMouseEnter={(e) => e.currentTarget.style.color = '#EF4444'}
+                        onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-muted)'}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   ))
                 ) : (

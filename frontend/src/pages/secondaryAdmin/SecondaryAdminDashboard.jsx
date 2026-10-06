@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
-import { AlertCircle, Clock, CheckCircle, ListFilter, ArrowRight, Database } from 'lucide-react';
+import { AlertCircle, Clock, CheckCircle, ListFilter, ArrowRight, Database, Bell, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { formatTime12Hour } from '../../utils/formatDate';
 
 const SecondaryAdminDashboard = () => {
   const { user } = useAuth();
+  const [notifications, setNotifications] = useState([]);
   const [stats, setStats] = useState({
     total: 0,
     high: 0,
@@ -15,7 +17,26 @@ const SecondaryAdminDashboard = () => {
     resolved: 0
   });
 
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get(`/notifications/${user.userId}`);
+      setNotifications(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch notifications');
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      await api.delete(`/notifications/${notificationId}`);
+      setNotifications(prev => prev.filter(n => n.notificationId !== notificationId));
+    } catch (err) {
+      console.error('Failed to delete notification');
+    }
+  };
+
   useEffect(() => {
+    fetchNotifications();
     const fetchStats = async () => {
       try {
         const response = await api.get(`/complaints/org/${user.organizationId}`);
@@ -173,6 +194,42 @@ const SecondaryAdminDashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Notifications Section */}
+      {notifications.length > 0 && (
+        <div className="card" style={{ marginTop: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+            <Bell size={20} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>RECENT NOTIFICATIONS</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {notifications.map(n => (
+              <div key={n.notificationId} style={{
+                padding: '12px 16px',
+                borderRadius: '12px',
+                background: 'rgba(255,255,255,0.02)',
+                border: '1px solid var(--border)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '12px'
+              }}>
+                <div>
+                  <div style={{ color: 'var(--text-main)', fontSize: '0.9rem', marginBottom: '4px' }}>{n.message}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{n.date} at {formatTime12Hour(n.time)}</div>
+                </div>
+                <button
+                  onClick={() => handleDeleteNotification(n.notificationId)}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px' }}
+                  title="Delete notification"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       <style>{`
         .hover-action:hover {

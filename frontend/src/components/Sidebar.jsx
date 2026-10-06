@@ -37,6 +37,7 @@ const Sidebar = ({ isOpen }) => {
     { to: '/secondary-admin/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard' },
     { to: '/secondary-admin/complaints', icon: <MessageSquare size={20} />, label: 'Complaints' },
     { to: '/secondary-admin/queue', icon: <ListChecks size={20} />, label: 'Priority Queue' },
+    { to: '/secondary-admin/organization', icon: <Users size={20} />, label: 'Organization Users' },
     { to: '/secondary-admin/dataset', icon: <Database size={20} />, label: 'Dataset' },
   ];
 
@@ -49,7 +50,7 @@ const Sidebar = ({ isOpen }) => {
   return (
     <div className={`sidebar ${isOpen ? 'open' : ''}`}>
       <div className="sidebar-logo-container" style={{ marginBottom: '2rem' }}>
-        <Logo height={30} showTagline={true} />
+        <Logo height={42} showTagline={true} />
       </div>
 
       <nav style={{ flex: 1 }}>

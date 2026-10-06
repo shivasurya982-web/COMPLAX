@@ -52,6 +52,7 @@ def register_org():
         "fullName": data['ownerFullName'],
         "email": data['email'].strip(),
         "password": data['password'],
+        "recoveryHint": data.get('recoveryHint', ''),
         "role": "SECONDARY_ADMIN",
         "organizationId": org_id,
         "organizationName": org_name,
@@ -161,3 +162,49 @@ def delete_org(org_id):
     write_json(ADMINS_FILE, admins)
 
     return jsonify({"message": "Organization deleted successfully"}), 200
+
+@org_bp.route('/<org_id>/users', methods=['GET'])
+def get_organization_users(org_id):
+    from config import USERS_FILE
+    users = read_json(USERS_FILE)
+    org_users = [u for u in users if u.get('organizationId') == org_id]
+    return jsonify(org_users), 200
+
+@org_bp.route('/users/suspend', methods=['POST'])
+def suspend_org_user():
+    from config import USERS_FILE
+    data = request.json or {}
+    user_id = data.get('userId')
+    org_id = data.get('organizationId')
+
+    users = read_json(USERS_FILE)
+    for u in users:
+        if u.get('userId') == user_id and u.get('organizationId') == org_id:
+            u['status'] = 'SUSPENDED'
+            break
+    write_json(USERS_FILE, users)
+    return jsonify({"message": "User suspended successfully"}), 200
+
+@org_bp.route('/users/activate', methods=['POST'])
+def activate_org_user():
+    from config import USERS_FILE
+    data = request.json or {}
+    user_id = data.get('userId')
+    org_id = data.get('organizationId')
+
+    users = read_json(USERS_FILE)
+    for u in users:
+        if u.get('userId') == user_id and u.get('organizationId') == org_id:
+            u['status'] = 'ACTIVE'
+            break
+    write_json(USERS_FILE, users)
+    return jsonify({"message": "User activated successfully"}), 200
+
+@org_bp.route('/users/<user_id>', methods=['DELETE'])
+def delete_org_user(user_id):
+    from config import USERS_FILE
+    users = read_json(USERS_FILE)
+    users = [u for u in users if u.get('userId') != user_id]
+    write_json(USERS_FILE, users)
+    return jsonify({"message": "User removed successfully"}), 200
+

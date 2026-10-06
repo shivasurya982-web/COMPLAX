@@ -161,6 +161,13 @@ def init_app():
         default_model.train()
         print("Default ML model trained successfully.")
 
+    # Pre-warm RAM Cache for sub-millisecond API response times
+    print("[COMPLAX Backend] Pre-warming RAM cache...")
+    from utils.helpers import read_db
+    for col in ['users', 'admins', 'organizations', 'categories', 'complaints', 'dataset_requests', 'notifications']:
+        read_db(col)
+    print("[COMPLAX Backend] RAM cache warmed up. Ready for instant responses!")
+
 # Serve React Frontend in production
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')

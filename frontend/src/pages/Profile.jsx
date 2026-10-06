@@ -12,6 +12,7 @@ const Profile = () => {
     phone: user.phone || '',
     address: user.address || '',
     organizationName: user.organizationName || '',
+    recoveryHint: user.recoveryHint || '',
     password: '',
     role: user.role
   });
@@ -139,6 +140,25 @@ const Profile = () => {
                 </div>
               </div>
             )}
+            <div className="form-group" style={{ gridColumn: '1 / -1' }}>
+              <label>Password Recovery Hint</label>
+              <div style={{ position: 'relative' }}>
+                <Lock size={16} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                <input
+                  type="text"
+                  name="recoveryHint"
+                  value={formData.recoveryHint}
+                  onChange={handleChange}
+                  className="form-control"
+                  style={{ paddingLeft: '40px' }}
+                  placeholder="e.g. Favorite pet, birth city, secret word"
+                />
+              </div>
+              <small style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '4px', display: 'block' }}>
+                Used to verify your identity if you ever forget your password.
+              </small>
+            </div>
+
             <div className="form-group" style={{ gridColumn: '1 / -1' }}>
               <label>Update Password (Leave blank to keep current)</label>
               <div style={{ position: 'relative' }}>

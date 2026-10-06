@@ -12,18 +12,7 @@ import Logo from '../../components/Logo';
 /*  - waves, blinks, looks at your cursor, nods while signing in,      */
 /*    shakes head when login fails; drag to rotate                      */
 /* ------------------------------------------------------------------ */
-const loadThree = (onReady) => {
-  if (window.THREE) { onReady(); return; }
-  const add = (src, onFail) => {
-    const s = document.createElement('script');
-    s.src = src; s.async = true;
-    s.onload = onReady;
-    s.onerror = onFail || (() => {});
-    document.body.appendChild(s);
-  };
-  add('https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js',
-    () => add('https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js'));
-};
+import { loadThree } from '../../utils/threeLoader';
 
 const Login3D = ({ role, submitting, failed }) => {
   const canvasRef = useRef(null);
@@ -287,7 +276,7 @@ const Login3D = ({ role, submitting, failed }) => {
       };
     };
 
-    loadThree(() => { if (active) init(); });
+    loadThree().then(() => { if (active) init(); }).catch(() => {});
     return () => { active = false; cleanup(); };
   }, []);
 
@@ -307,6 +296,78 @@ const Login = () => {
   const [submitting, setSubmitting] = useState(false);
   const { login, isAuthenticated, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
+
+  // Forgot Password state
+  const [showForgot, setShowForgot] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1); // 1: Email, 2: Hint, 3: Reset
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotHint, setForgotHint] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+
+  const handleForgotCheckEmail = async (e) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotLoading(true);
+
+    try {
+      await api.post('/auth/forgot-password/check-email', { email: forgotEmail });
+      setForgotStep(2);
+    } catch (err) {
+      setForgotError(err.response?.data?.error || 'Email not found.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleForgotVerifyHint = async (e) => {
+    e.preventDefault();
+    setForgotError('');
+    setForgotLoading(true);
+
+    try {
+      await api.post('/auth/forgot-password/verify-hint', { email: forgotEmail, recoveryHint: forgotHint });
+      setForgotStep(3);
+    } catch (err) {
+      setForgotError(err.response?.data?.error || 'Incorrect recovery hint.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleForgotReset = async (e) => {
+    e.preventDefault();
+    if (newPassword !== confirmNewPassword) {
+      return setForgotError('Passwords do not match');
+    }
+    setForgotError('');
+    setForgotLoading(true);
+
+    try {
+      await api.post('/auth/forgot-password/reset', {
+        email: forgotEmail,
+        recoveryHint: forgotHint,
+        newPassword
+      });
+      setForgotSuccess('Password reset successfully! You can now log in.');
+      setTimeout(() => {
+        setShowForgot(false);
+        setForgotStep(1);
+        setForgotEmail('');
+        setForgotHint('');
+        setNewPassword('');
+        setConfirmNewPassword('');
+        setForgotSuccess('');
+      }, 2500);
+    } catch (err) {
+      setForgotError(err.response?.data?.error || 'Password reset failed.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
 
   React.useEffect(() => {
     if (!authLoading && isAuthenticated && user) {
@@ -380,103 +441,245 @@ const Login = () => {
 
             <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
               <div style={{ display: 'inline-flex', justifyContent: 'center', marginBottom: '0.75rem' }}>
-                <Logo height={42} showTagline={true} />
+                <Logo height={54} showTagline={true} />
               </div>
             </div>
 
-            <div className="role-selector">
-              <button
-                className={`role-btn ${role === 'USER' ? 'active' : ''}`}
-                onClick={() => setRole('USER')}
-              >
-                USER
-              </button>
-              <button
-                className={`role-btn ${role === 'SECONDARY_ADMIN' ? 'active' : ''}`}
-                onClick={() => setRole('SECONDARY_ADMIN')}
-              >
-                ORGANIZATION
-              </button>
-            </div>
-
-            {error && (
-              <div style={{
-                background: 'rgba(239, 68, 68, 0.1)',
-                color: '#EF4444',
-                padding: '12px',
-                borderRadius: '12px',
-                marginBottom: '1.5rem',
-                fontSize: '0.875rem',
-                textAlign: 'center',
-                border: '1px solid rgba(239, 68, 68, 0.2)'
-              }}>
-                {error}
-              </div>
-            )}
-
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label>Email Address</label>
-                <div style={{ position: 'relative' }}>
-                  <Mail size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input
-                    type="email"
-                    className="form-control"
-                    style={{ paddingLeft: '48px' }}
-                    placeholder="name@company.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+            {showForgot ? (
+              /* Forgot Password Flow */
+              <div>
+                <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                  <h3 style={{ fontSize: '1.25rem', marginBottom: '0.25rem' }}>Reset Password</h3>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+                    {forgotStep === 1 && 'Enter your registered email address.'}
+                    {forgotStep === 2 && 'Enter your secret recovery hint.'}
+                    {forgotStep === 3 && 'Choose a new password for your account.'}
+                  </p>
                 </div>
-              </div>
 
-              <div className="form-group">
-                <label>Password</label>
-                <div style={{ position: 'relative' }}>
-                  <Lock size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    className="form-control"
-                    style={{ paddingLeft: '48px', paddingRight: '48px' }}
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
+                {forgotError && (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#EF4444',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    marginBottom: '1rem',
+                    fontSize: '0.875rem',
+                    textAlign: 'center',
+                    border: '1px solid rgba(239, 68, 68, 0.2)'
+                  }}>
+                    {forgotError}
+                  </div>
+                )}
+
+                {forgotSuccess && (
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.1)',
+                    color: '#10B981',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    marginBottom: '1rem',
+                    fontSize: '0.875rem',
+                    textAlign: 'center',
+                    border: '1px solid rgba(16, 185, 129, 0.2)'
+                  }}>
+                    {forgotSuccess}
+                  </div>
+                )}
+
+                {forgotStep === 1 && (
+                  <form onSubmit={handleForgotCheckEmail}>
+                    <div className="form-group">
+                      <label>Registered Email</label>
+                      <div style={{ position: 'relative' }}>
+                        <Mail size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <input
+                          type="email"
+                          className="form-control"
+                          style={{ paddingLeft: '48px' }}
+                          placeholder="name@company.com"
+                          value={forgotEmail}
+                          onChange={(e) => setForgotEmail(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={forgotLoading}>
+                      {forgotLoading ? 'Checking...' : 'Continue'}
+                    </button>
+                  </form>
+                )}
+
+                {forgotStep === 2 && (
+                  <form onSubmit={handleForgotVerifyHint}>
+                    <div className="form-group">
+                      <label>Secret Recovery Hint / Answer</label>
+                      <div style={{ position: 'relative' }}>
+                        <Lock size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                        <input
+                          type="text"
+                          className="form-control"
+                          style={{ paddingLeft: '48px' }}
+                          placeholder="Enter your recovery hint"
+                          value={forgotHint}
+                          onChange={(e) => setForgotHint(e.target.value)}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={forgotLoading}>
+                      {forgotLoading ? 'Verifying...' : 'Verify Hint'}
+                    </button>
+                  </form>
+                )}
+
+                {forgotStep === 3 && (
+                  <form onSubmit={handleForgotReset}>
+                    <div className="form-group">
+                      <label>New Password</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        placeholder="••••••••"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>Confirm New Password</label>
+                      <input
+                        type="password"
+                        className="form-control"
+                        placeholder="••••••••"
+                        value={confirmNewPassword}
+                        onChange={(e) => setConfirmNewPassword(e.target.value)}
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={forgotLoading}>
+                      {forgotLoading ? 'Resetting Password...' : 'Reset Password'}
+                    </button>
+                  </form>
+                )}
+
+                <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
                   <button
                     type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'transparent',
-                      border: 'none',
-                      color: 'var(--text-muted)',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center'
-                    }}
+                    onClick={() => { setShowForgot(false); setForgotStep(1); setForgotError(''); }}
+                    style={{ background: 'transparent', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem' }}
                   >
-                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                    Back to Sign In
                   </button>
                 </div>
               </div>
+            ) : (
+              /* Regular Login Flow */
+              <div>
+                <div className="role-selector">
+                  <button
+                    className={`role-btn ${role === 'USER' ? 'active' : ''}`}
+                    onClick={() => setRole('USER')}
+                  >
+                    USER
+                  </button>
+                  <button
+                    className={`role-btn ${role === 'SECONDARY_ADMIN' ? 'active' : ''}`}
+                    onClick={() => setRole('SECONDARY_ADMIN')}
+                  >
+                    ORGANIZATION
+                  </button>
+                </div>
 
-              <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={submitting}>
-                {submitting ? 'Authenticating...' : 'Sign In'}
-              </button>
-            </form>
+                {error && (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    color: '#EF4444',
+                    padding: '12px',
+                    borderRadius: '12px',
+                    marginBottom: '1.5rem',
+                    fontSize: '0.875rem',
+                    textAlign: 'center',
+                    border: '1px solid rgba(239, 68, 68, 0.2)'
+                  }}>
+                    {error}
+                  </div>
+                )}
 
-            <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-              {role === 'USER' ? (
-                <span>New user? <Link to="/register" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Create an account</Link></span>
-              ) : (
-                <span>New organization? <Link to="/register-org" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Register organization</Link></span>
-              )}
-            </div>
+                <form onSubmit={handleSubmit}>
+                  <div className="form-group">
+                    <label>Email Address</label>
+                    <div style={{ position: 'relative' }}>
+                      <Mail size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input
+                        type="email"
+                        className="form-control"
+                        style={{ paddingLeft: '48px' }}
+                        placeholder="name@company.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <label style={{ margin: 0 }}>Password</label>
+                      <button
+                        type="button"
+                        onClick={() => { setShowForgot(true); setForgotEmail(email); }}
+                        style={{ background: 'transparent', border: 'none', color: 'var(--primary)', fontSize: '0.8rem', cursor: 'pointer', fontWeight: 600 }}
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                    <div style={{ position: 'relative' }}>
+                      <Lock size={18} style={{ position: 'absolute', left: '16px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                      <input
+                        type={showPassword ? "text" : "password"}
+                        className="form-control"
+                        style={{ paddingLeft: '48px', paddingRight: '48px' }}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: '12px',
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--text-muted)',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                      </button>
+                    </div>
+                  </div>
+
+                  <button type="submit" className="btn-primary" style={{ width: '100%', marginTop: '1rem' }} disabled={submitting}>
+                    {submitting ? 'Authenticating...' : 'Sign In'}
+                  </button>
+                </form>
+
+                <div style={{ marginTop: '2rem', textAlign: 'center', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
+                  {role === 'USER' ? (
+                    <span>New user? <Link to="/register" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Create an account</Link></span>
+                  ) : (
+                    <span>New organization? <Link to="/register-org" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 600 }}>Register organization</Link></span>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

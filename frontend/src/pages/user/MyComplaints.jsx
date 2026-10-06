@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { Search, Filter, Trash2, CheckCircle, MessageSquare } from 'lucide-react';
+import { formatTime12Hour } from '../../utils/formatDate';
 
 const MyComplaints = () => {
   const { user } = useAuth();
@@ -139,7 +140,7 @@ const MyComplaints = () => {
                     <td style={{ maxWidth: '300px' }}>{c.complaint}</td>
                     <td>
                       <div style={{ fontSize: '0.875rem' }}>{c.date}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{c.time}</div>
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>{formatTime12Hour(c.time)}</div>
                     </td>
                     <td>
                       <span className={`badge badge-${c.priority.toLowerCase()}`}>

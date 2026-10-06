@@ -34,3 +34,27 @@ def get_unread_count(user_id):
 def read_all_notifications(user_id):
     update_db('notifications', {"userId": user_id}, {"isRead": True})
     return jsonify({"message": "All marked as read"}), 200
+
+@notification_bp.route('/<notification_id>', methods=['DELETE'])
+def delete_single_notification(notification_id):
+    if USE_MONGODB:
+        db['notifications'].delete_one({"notificationId": notification_id})
+    else:
+        notifications = read_db('notifications')
+        notifications = [n for n in notifications if n.get('notificationId') != notification_id]
+        from utils.helpers import write_json
+        from config import NOTIFICATIONS_FILE
+        write_json(NOTIFICATIONS_FILE, notifications)
+    return jsonify({"message": "Notification deleted"}), 200
+
+@notification_bp.route('/clear/<user_id>', methods=['DELETE'])
+def clear_user_notifications(user_id):
+    if USE_MONGODB:
+        db['notifications'].delete_many({"userId": user_id})
+    else:
+        notifications = read_db('notifications')
+        notifications = [n for n in notifications if n.get('userId') != user_id]
+        from utils.helpers import write_json
+        from config import NOTIFICATIONS_FILE
+        write_json(NOTIFICATIONS_FILE, notifications)
+    return jsonify({"message": "All notifications cleared"}), 200

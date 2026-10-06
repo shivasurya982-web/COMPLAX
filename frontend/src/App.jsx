@@ -1,34 +1,47 @@
-import React, { useState } from 'react';
+import React, { useState, lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 
-// Pages
-import Home from './pages/Home';
-import Login from './pages/auth/Login';
-import UserRegister from './pages/auth/UserRegister';
-import SecondaryAdminRegister from './pages/auth/SecondaryAdminRegister';
+// Lazy Loaded Pages for Instant Initial Loading Speed
+const Home = lazy(() => import('./pages/Home'));
+const Login = lazy(() => import('./pages/auth/Login'));
+const UserRegister = lazy(() => import('./pages/auth/UserRegister'));
+const SecondaryAdminRegister = lazy(() => import('./pages/auth/SecondaryAdminRegister'));
 
-import UserDashboard from './pages/user/UserDashboard';
-import MyComplaints from './pages/user/MyComplaints';
-import MyOrganization from './pages/user/MyOrganization';
+const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
+const MyComplaints = lazy(() => import('./pages/user/MyComplaints'));
+const MyOrganization = lazy(() => import('./pages/user/MyOrganization'));
 
-import MainAdminDashboard from './pages/mainAdmin/MainAdminDashboard';
-import Organizations from './pages/mainAdmin/Organizations';
-import Users from './pages/mainAdmin/Users';
-import Categories from './pages/mainAdmin/Categories';
-import AdminRequests from './pages/mainAdmin/AdminRequests';
-import DatasetApprovals from './pages/mainAdmin/DatasetApprovals';
+const MainAdminDashboard = lazy(() => import('./pages/mainAdmin/MainAdminDashboard'));
+const Organizations = lazy(() => import('./pages/mainAdmin/Organizations'));
+const Users = lazy(() => import('./pages/mainAdmin/Users'));
+const Categories = lazy(() => import('./pages/mainAdmin/Categories'));
+const AdminRequests = lazy(() => import('./pages/mainAdmin/AdminRequests'));
+const DatasetApprovals = lazy(() => import('./pages/mainAdmin/DatasetApprovals'));
 
-import SecondaryAdminDashboard from './pages/secondaryAdmin/SecondaryAdminDashboard';
-import OrganizationComplaints from './pages/secondaryAdmin/OrganizationComplaints';
-import PriorityQueuePage from './pages/secondaryAdmin/PriorityQueuePage';
-import OrganizationDataset from './pages/secondaryAdmin/OrganizationDataset';
-import Profile from './pages/Profile';
+const SecondaryAdminDashboard = lazy(() => import('./pages/secondaryAdmin/SecondaryAdminDashboard'));
+const OrganizationComplaints = lazy(() => import('./pages/secondaryAdmin/OrganizationComplaints'));
+const PriorityQueuePage = lazy(() => import('./pages/secondaryAdmin/PriorityQueuePage'));
+const OrganizationDataset = lazy(() => import('./pages/secondaryAdmin/OrganizationDataset'));
+const SecondaryOrgUsers = lazy(() => import('./pages/secondaryAdmin/MyOrganization'));
+const Profile = lazy(() => import('./pages/Profile'));
 
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
 import Navbar from './components/Navbar';
 import Sidebar from './components/Sidebar';
+
+const PageLoader = () => (
+  <div style={{
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '200px',
+    width: '100%'
+  }}>
+    <div className="loading-spinner"></div>
+  </div>
+);
 
 const AppLayout = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
@@ -41,7 +54,12 @@ const AppLayout = ({ children }) => {
   }, [location]);
 
   if (loading) {
-    return <div className="loading-screen">COMPLAX is loading...</div>;
+    return (
+      <div className="loading-screen" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: '1rem' }}>
+        <div className="loading-spinner"></div>
+        <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>COMPLAX loading...</span>
+      </div>
+    );
   }
 
   return (
@@ -55,7 +73,9 @@ const AppLayout = ({ children }) => {
       )}
       <div className="main-layout">
         <main className={isAuthenticated ? "content with-sidebar" : "content"}>
-          {children}
+          <Suspense fallback={<PageLoader />}>
+            {children}
+          </Suspense>
         </main>
       </div>
     </div>
@@ -90,6 +110,7 @@ const App = () => {
           <Route path="/secondary-admin/dashboard" element={<ProtectedRoute role="SECONDARY_ADMIN"><SecondaryAdminDashboard /></ProtectedRoute>} />
           <Route path="/secondary-admin/complaints" element={<ProtectedRoute role="SECONDARY_ADMIN"><OrganizationComplaints /></ProtectedRoute>} />
           <Route path="/secondary-admin/queue" element={<ProtectedRoute role="SECONDARY_ADMIN"><PriorityQueuePage /></ProtectedRoute>} />
+          <Route path="/secondary-admin/organization" element={<ProtectedRoute role="SECONDARY_ADMIN"><SecondaryOrgUsers /></ProtectedRoute>} />
           <Route path="/secondary-admin/dataset" element={<ProtectedRoute role="SECONDARY_ADMIN"><OrganizationDataset /></ProtectedRoute>} />
 
           {/* Shared Routes */}
@@ -103,3 +124,4 @@ const App = () => {
 };
 
 export default App;
+
