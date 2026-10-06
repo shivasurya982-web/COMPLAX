@@ -5,6 +5,9 @@ from datetime import datetime
 from pymongo import MongoClient, ReplaceOne
 from config import MONGO_URI
 
+# Storage Mode Flag
+USE_MONGODB = True
+
 # Connect directly and exclusively to MongoDB Atlas Cloud
 client = MongoClient(
     MONGO_URI,
