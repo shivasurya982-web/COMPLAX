@@ -2,27 +2,39 @@ import os
 import json
 import copy
 from datetime import datetime
+import dns.resolver
 from pymongo import MongoClient, ReplaceOne
 from config import MONGO_URI
+
+# Configure dnspython to use Google & Cloudflare DNS (8.8.8.8, 1.1.1.1)
+# to bypass local Windows router DNS timeouts on SRV lookups
+try:
+    custom_resolver = dns.resolver.Resolver(configure=False)
+    custom_resolver.nameservers = ['8.8.8.8', '1.1.1.1', '8.8.4.4']
+    custom_resolver.timeout = 5
+    custom_resolver.lifetime = 10
+    dns.resolver.default_resolver = custom_resolver
+except Exception:
+    pass
 
 # Storage Mode Flag
 USE_MONGODB = False
 db = None
 
-# Attempt to connect to MongoDB Atlas Cloud with fallback on local DNS timeouts
+# Connect directly to MongoDB Atlas Cloud Database
 try:
     client = MongoClient(
         MONGO_URI,
         maxPoolSize=50,
         minPoolSize=5,
         maxIdleTimeMS=45000,
-        serverSelectionTimeoutMS=2000,
-        connectTimeoutMS=2000
+        serverSelectionTimeoutMS=5000,
+        connectTimeoutMS=5000
     )
     client.admin.command('ping')
     db = client.get_database()
     USE_MONGODB = True
-    print("✅ Connected to MongoDB Atlas Cloud Database.")
+    print("✅ Successfully connected to MongoDB Atlas Cloud Database.")
 
     # Create indexes for optimal query speed in MongoDB Atlas
     try:
@@ -38,7 +50,7 @@ try:
 except Exception as e:
     USE_MONGODB = False
     db = None
-    print("⚠️ MongoDB Atlas connection unavailable or DNS timed out. Using local database fallback.")
+    print("⚠️ MongoDB Atlas connection fallback: using local database.")
 
 def get_db_collection(collection_name):
     """Returns a MongoDB Atlas collection or None if in local mode."""
