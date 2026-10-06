@@ -48,6 +48,10 @@ const AppLayout = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const location = useLocation();
 
+  const publicPaths = ['/', '/home', '/login', '/register', '/register-org'];
+  const isPublicRoute = publicPaths.includes(location.pathname);
+  const showAuthLayout = isAuthenticated && !isPublicRoute;
+
   // Close sidebar on route change (for mobile)
   React.useEffect(() => {
     setIsSidebarOpen(false);
@@ -64,7 +68,7 @@ const AppLayout = ({ children }) => {
 
   return (
     <div className="app-container">
-      {isAuthenticated && (
+      {showAuthLayout && (
         <>
           <Navbar onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)} />
           {isSidebarOpen && <div className="sidebar-overlay" onClick={() => setIsSidebarOpen(false)}></div>}
@@ -72,7 +76,7 @@ const AppLayout = ({ children }) => {
         </>
       )}
       <div className="main-layout">
-        <main className={isAuthenticated ? "content with-sidebar" : "content"}>
+        <main className={showAuthLayout ? "content with-sidebar" : "content"}>
           <Suspense fallback={<PageLoader />}>
             {children}
           </Suspense>
