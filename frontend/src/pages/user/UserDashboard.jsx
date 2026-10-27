@@ -1,0 +1,327 @@
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
+import { Link, useNavigate } from 'react-router-dom';
+import { Send, Building2, Tags, CheckCircle, Bell, Trash2, PlusCircle } from 'lucide-react';
+import { formatTime12Hour } from '../../utils/formatDate';
+import { getNotificationTarget } from '../../utils/notificationUtils';
+import ComplaintSuggestionInput from '../../components/ComplaintSuggestionInput';
+
+const UserDashboard = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const [complaint, setComplaint] = useState('');
+  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [locationDetails, setLocationDetails] = useState('');
+  const [recentComplaints, setRecentComplaints] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+
+  const getLocationPlaceholder = () => {
+    switch (user.category) {
+      case 'Hostel':
+      case 'College Hostel':
+        return 'Room Number or Location (e.g. 302 or your location like c block)';
+      case 'Apartment':
+      case 'Residential Building':
+        return 'Flat / Unit Number or Location (e.g. 302 or your location like c block)';
+      case 'Office':
+        return 'Cabin / Floor or Location (e.g. 302 or your location like c block)';
+      default:
+        return 'e.g. 302 or your location like c block';
+    }
+  };
+
+  const [notifications, setNotifications] = useState([]);
+
+  const fetchNotifications = async () => {
+    try {
+      const res = await api.get(`/notifications/${user.userId}`);
+      setNotifications(res.data || []);
+    } catch (err) {
+      console.error('Failed to fetch notifications');
+    }
+  };
+
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      await api.delete(`/notifications/${notificationId}`);
+      setNotifications(prev => prev.filter(n => n.notificationId !== notificationId));
+    } catch (err) {
+      console.error('Failed to delete notification');
+    }
+  };
+
+  const fetchComplaints = async () => {
+    setLoading(true);
+    try {
+      const response = await api.get(`/complaints/user/${user.userId}`);
+      setRecentComplaints(response.data.slice(-5).reverse());
+    } catch (err) {
+      console.error('Failed to fetch complaints');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchComplaints();
+    fetchNotifications();
+  }, []);
+
+  const [reporterName, setReporterName] = useState(user.fullName);
+  const [reporterPhone, setReporterPhone] = useState(user.phone || '');
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!complaint.trim() || !locationDetails.trim() || !reporterName.trim() || !reporterPhone.trim()) return;
+
+    setSubmitting(true);
+    try {
+      await api.post('/complaints', {
+        userId: user.userId,
+        userName: reporterName,
+        userPhone: reporterPhone,
+        organizationId: user.organizationId,
+        organizationName: user.organizationName,
+        category: selectedRecord?.category || user.category,
+        locationDetails: locationDetails,
+        complaint: complaint,
+        priority: selectedRecord?.priority,
+        selectedRecordId: selectedRecord?.recordId || null
+      });
+      setComplaint('');
+      setSelectedRecord(null);
+      setLocationDetails('');
+      fetchComplaints();
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
+    } catch (err) {
+      alert('Failed to submit complaint');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="animate-fade">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        <div>
+          <h2 className="dashboard-title" style={{ margin: 0 }}>Welcome back, {user.fullName} 👋</h2>
+          <p className="dashboard-subtitle" style={{ margin: 0 }}>Here is what's happening with your complaints.</p>
+        </div>
+        <Link to="/user/submit-complaint" className="btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
+          <PlusCircle size={18} /> Submit Complaint
+        </Link>
+      </div>
+
+      <div className="stats-grid">
+        <div className="card stat-card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)' }}>
+            <Building2 size={20} />
+            <span className="stat-label">Organization</span>
+          </div>
+          <span className="stat-value">{user.organizationName}</span>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Your registered organization</p>
+        </div>
+        <div className="card stat-card">
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--primary)' }}>
+            <Tags size={20} />
+            <span className="stat-label">Category</span>
+          </div>
+          <span className="stat-value">{user.category}</span>
+          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Organization type</p>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginBottom: '2.5rem', position: 'relative', overflow: 'visible' }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          right: 0,
+          width: '150px',
+          height: '150px',
+          background: 'radial-gradient(circle, rgba(224, 109, 67, 0.05) 0%, transparent 70%)',
+          zIndex: 0
+        }}></div>
+
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
+            <div>
+              <h3 style={{ fontSize: '1.1rem', marginBottom: '0.25rem' }}>REPORT A NEW PROBLEM</h3>
+              <p style={{ fontSize: '0.875rem', color: 'var(--text-secondary)' }}>Describe the issue clearly. Our system will automatically analyze and assign its priority.</p>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit}>
+            <div className="responsive-grid" style={{ marginBottom: '1.5rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>REPORTER NAME</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Your Full Name"
+                  value={reporterName}
+                  onChange={(e) => setReporterName(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>PHONE NUMBER</label>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Contact Number"
+                  value={reporterPhone}
+                  onChange={(e) => setReporterPhone(e.target.value)}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>LOCATION DETAILS</label>
+              <input
+                type="text"
+                className="form-control"
+                placeholder={getLocationPlaceholder()}
+                value={locationDetails}
+                onChange={(e) => setLocationDetails(e.target.value)}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <ComplaintSuggestionInput
+                value={complaint}
+                onChange={setComplaint}
+                onSelectRecord={(record) => {
+                  setSelectedRecord(record);
+                  setComplaint(record.displayText || record.complaint);
+                }}
+                onClearRecord={() => setSelectedRecord(null)}
+                selectedRecord={selectedRecord}
+                organizationId={user.organizationId}
+                rows={3}
+                placeholder="Describe your problem correctly. Suggestions will appear as you type..."
+                required
+              />
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+              <button type="submit" className="btn-primary" disabled={submitting}>
+                {submitting ? 'Analyzing...' : <>Submit Complaint <Send size={18} /></>}
+              </button>
+
+              {showSuccess && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--low)', fontSize: '0.875rem', fontWeight: 600 }}>
+                  <CheckCircle size={18} />
+                  Complaint submitted successfully!
+                </div>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {/* Notifications Section */}
+      {notifications.length > 0 && (
+        <div className="card" style={{ marginBottom: '2.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '1rem' }}>
+            <Bell size={20} color="var(--primary)" />
+            <h3 style={{ fontSize: '1.1rem', margin: 0 }}>RECENT NOTIFICATIONS</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {notifications.map(n => (
+              <div
+                key={n.notificationId}
+                onClick={() => {
+                  const target = getNotificationTarget(n, user?.role);
+                  if (target && target !== '#') navigate(target);
+                }}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: '12px',
+                  background: 'rgba(255,255,255,0.02)',
+                  border: '1px solid var(--border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px',
+                  cursor: 'pointer',
+                  transition: 'var(--transition)'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(224, 109, 67, 0.1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.02)'}
+              >
+                <div>
+                  <div style={{ color: 'var(--text-main)', fontSize: '0.9rem', marginBottom: '4px' }}>{n.message}</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem' }}>{n.date} at {formatTime12Hour(n.time)}</div>
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteNotification(n.notificationId);
+                  }}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', padding: '6px' }}
+                  title="Delete notification"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="card">
+        <h3 style={{ marginBottom: '1.5rem', fontSize: '1.1rem' }}>RECENT HISTORY</h3>
+        <div className="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Complaint Description</th>
+                <th>Date Submitted</th>
+                <th>AI Priority</th>
+                <th>Current Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recentComplaints.length > 0 ? (
+                recentComplaints.map((c) => (
+                  <tr key={c.complaintId}>
+                    <td style={{ fontWeight: 500, maxWidth: '400px' }}>{c.complaint}</td>
+                    <td style={{ color: 'var(--text-secondary)' }}>{c.date}</td>
+                    <td>
+                      <span className={`badge badge-${c.priority.toLowerCase()}`}>
+                        {c.priority}
+                      </span>
+                    </td>
+                    <td>
+                      <span className={`status-text status-${c.status.toLowerCase().replace(' ', '-')}`}>
+                        {c.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
+                    {loading ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                        <div className="loading-spinner"></div>
+                        <span>Fetching your complaint records...</span>
+                      </div>
+                    ) : 'No recent complaints found.'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default UserDashboard;

@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 120" fill="none">
+  <!-- Orbital C Emblem -->
+  <g transform="translate(10, 10)">
+    <path d="M 65 20 A 38 38 0 1 0 65 80" stroke="currentColor" stroke-width="6.5" stroke-linecap="round" fill="none"/>
+    <path d="M 58 32 A 26 26 0 1 0 58 68" stroke="currentColor" stroke-width="5.5" stroke-linecap="round" fill="none"/>
+    <!-- Arrows -->
+    <path d="M 60 11 L 74 20 L 60 29 Z" fill="currentColor"/>
+    <path d="M 60 71 L 74 80 L 60 89 Z" fill="currentColor"/>
+    <!-- Orbital Loops -->
+    <ellipse cx="44" cy="50" rx="32" ry="15" stroke="currentColor" stroke-width="4.5" fill="none" transform="rotate(-30 44 50)"/>
+    <ellipse cx="44" cy="50" rx="32" ry="15" stroke="currentColor" stroke-width="4.5" fill="none" transform="rotate(30 44 50)"/>
+    <!-- Nodes -->
+    <circle cx="50" cy="12" r="4.5" fill="currentColor"/>
+    <circle cx="50" cy="88" r="4.5" fill="currentColor"/>
+    <circle cx="12" cy="50" r="4.5" fill="currentColor"/>
+    <circle cx="21" cy="28" r="3.5" fill="currentColor"/>
+    <circle cx="21" cy="72" r="3.5" fill="currentColor"/>
+  </g>
+
+  <!-- COMPLAX Text -->
+  <text x="110" y="62" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="900" font-size="44" letter-spacing="2" fill="currentColor">COMPLA</text>
+
+  <!-- Stylized X with Arrow -->
+  <g transform="translate(328, 24)">
+    <path d="M 6 38 L 32 6 M 32 38 L 6 6" stroke="currentColor" stroke-width="8.5" stroke-linecap="round"/>
+    <path d="M 22 6 L 38 6 L 38 22" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <line x1="28" y1="16" x2="42" y2="2" stroke="currentColor" stroke-width="7" stroke-linecap="round"/>
+    <path d="M 32 2 L 44 2 L 44 14 Z" fill="currentColor"/>
+  </g>
+
+  <!-- Tagline -->
+  <text x="110" y="88" font-family="'Plus Jakarta Sans', system-ui, -apple-system, sans-serif" font-weight="700" font-size="11" letter-spacing="1.5" fill="currentColor" opacity="0.9">CONNECTING ORGANIZATIONS. RESOLVING ISSUES.</text>
+</svg>

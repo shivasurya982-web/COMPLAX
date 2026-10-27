@@ -1,0 +1,12 @@
+Flask
+flask-cors
+pandas
+numpy
+scikit-learn
+joblib
+Werkzeug
+waitress
+gunicorn
+pymongo
+dnspython
+python-dotenv
