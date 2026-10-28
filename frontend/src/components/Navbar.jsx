@@ -5,6 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { formatTime12Hour } from '../utils/formatDate';
 import { getNotificationTarget } from '../utils/notificationUtils';
+import InstallPwaButton from './InstallPwaButton';
 
 const Navbar = ({ onToggleSidebar }) => {
   const { user } = useAuth();
@@ -80,7 +81,9 @@ const Navbar = ({ onToggleSidebar }) => {
         </button>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+        <InstallPwaButton variant="navbar" />
+
         <div style={{ position: 'relative' }}>
           <button
             onClick={handleMarkAsRead}

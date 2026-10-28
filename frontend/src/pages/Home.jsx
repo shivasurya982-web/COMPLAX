@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Logo from '../components/Logo';
 import { loadThree } from '../utils/threeLoader';
+import InstallPwaButton from '../components/InstallPwaButton';
 
 const Home = () => {
   useEffect(() => {
@@ -341,6 +342,7 @@ html{scroll-behavior:smooth}
           <a href="#track">Resolved</a>
         </div>
         <div className="nav-r">
+          <InstallPwaButton variant="navbar" />
           <Link className="btn ghost" to="/login">Login</Link>
           <Link className="btn solid" to="/register">Register</Link>
         </div>
@@ -355,6 +357,7 @@ html{scroll-behavior:smooth}
           <p className="lead">Submit a complaint about any organization or service, let the concerned team handle it, and track its progress until it is resolved.</p>
           <div className="cta">
             <Link className="btn solid" to="/register">Get Started</Link>
+            <InstallPwaButton variant="solid" />
             <a className="btn ghost" href="#how">See how it works</a>
           </div>
         </div>
